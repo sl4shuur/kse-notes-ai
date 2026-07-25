@@ -1,0 +1,45 @@
+[project]
+name = "notes-ai"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "colorama>=0.4.6",
+    "python-dotenv>=1.0.0",
+    "audioop-lts>=0.2.2",
+    "pydub>=0.25.1",
+    "groq>=0.31.1",
+    "ipykernel>=7.1.0",
+    "ipywidgets>=8.1.8",
+    "pillow>=12.0.0",
+    "pymupdf>=1.26.6",
+    "mdformat-myst>=0.2.2",
+    "yt-dlp>=2025.11.12",
+    # for YouTube transcript extraction
+    "youtube-transcript-api>=1.2.3",
+    "webvtt-py>=0.5.1",
+    # for web scraping and dynamic content extraction
+    "trafilatura>=2.0.0",
+    "playwright>=1.56.0",
+    # for cool CLI
+    "rich-click>=1.9.4",
+    "requests>=2.32.5",
+    # better requests (Cloudflare bypass, etc)
+    "curl-cffi>=0.13.0",
+    "pandas>=2.3.3",
+    "jinja2>=3.1.6",
+    "matplotlib>=3.10.7",
+    "faster-whisper>=1.2.1",
+    # for UI
+    "gradio>=6.0.2",
+    "markdown>=3.10",
+    "seaborn>=0.13.2",
+    "scikit-learn>=1.8.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+]
+
