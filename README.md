@@ -2,6 +2,7 @@
 
 Notes AI turns YouTube videos, web articles, PDFs, images, and audio files into structured Markdown study notes. The target product combines multi-source content extraction, an explicit note-generation pipeline, semantic highlighting, generated visuals, related-note discovery, and a web interface.
 
+> [!NOTE]
 > **Project status:** active refactoring. The repository already contains working extraction and note-generation modules, but the codebase is being reorganized into a stable Python package before new product features are added.
 
 ## Target capabilities
