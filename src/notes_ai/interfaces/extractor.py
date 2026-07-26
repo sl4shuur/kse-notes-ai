@@ -1,0 +1,6 @@
+from typing import Protocol
+from notes_ai.models import Source, ExtractedContent
+
+class TextExtractor(Protocol):
+    def supports(self, source: Source) -> bool: ...
+    async def extract(self, source: Source) -> ExtractedContent: ...

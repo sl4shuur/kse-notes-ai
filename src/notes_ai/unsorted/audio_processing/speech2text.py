@@ -7,7 +7,7 @@ from pydub import AudioSegment
 from faster_whisper import WhisperModel
 from groq import Groq
 
-from src.utils.logging_config import CustomLogger
+from notes_ai.utils.logging_config import CustomLogger
 
 
 def create_audio_chunks(audio_file: str | Path, chunk_duration_ms: int, temp_dir: str | Path, logger: CustomLogger) -> list[Path]:
