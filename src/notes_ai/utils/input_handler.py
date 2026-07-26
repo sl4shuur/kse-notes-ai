@@ -2,12 +2,12 @@ from pathlib import Path
 from typing import Any
 
 # Import processors
-from src.yt_processing.yt_video2text import generate_yt_transcript, is_valid_youtube_url
-from src.web_processing.web2text import fetch_article_text
-from src.doc_processing.pdf2text import single_pdf2text
-from src.image_processing.img2text import single_img2text
-from src.audio_processing.speech2text import transcribe_with_groq
-from src.utils.logging_config import CustomLogger
+from notes_ai.unsorted.yt_processing.yt_video2text import generate_yt_transcript, is_valid_youtube_url
+from notes_ai.unsorted.web_processing.web2text import fetch_article_text
+from notes_ai.unsorted.doc_processing.pdf2text import single_pdf2text
+from notes_ai.unsorted.image_processing.img2text import single_img2text
+from notes_ai.unsorted.audio_processing.speech2text import transcribe_with_groq
+from notes_ai.utils.logging_config import CustomLogger
 
 # Supported extensions
 AUDIO_EXTENSIONS = {".mp3", ".wav", ".m4a", ".opus", ".flac", ".aac"}

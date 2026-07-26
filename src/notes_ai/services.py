@@ -3,13 +3,13 @@ import mdformat
 from typing import cast
 from pathlib import Path
 
-from src.yt_processing.downloader import yt_dlp_download, DownloadType, AudioFormat, AudioQuality
-from src.utils.input_handler import process_content
-from src.note_generator.generator import generate_note
-from src.note_generator.final_cleaner import clean_note
-from src.note_generator import apply_color_markup, generate_raw_outline
-from src.art_generator.ArtManager import ArtManager
-from src.utils.logging_config import CustomLogger
+from notes_ai.unsorted.yt_processing.downloader import yt_dlp_download, DownloadType, AudioFormat, AudioQuality
+from notes_ai.utils.input_handler import process_content
+from notes_ai.unsorted.note_generator.generator import generate_note
+from notes_ai.unsorted.note_generator.final_cleaner import clean_note
+from notes_ai.unsorted.note_generator import apply_color_markup, generate_raw_outline
+from notes_ai.unsorted.art_generator.ArtManager import ArtManager
+from notes_ai.utils.logging_config import CustomLogger
 
 
 def download_youtube(

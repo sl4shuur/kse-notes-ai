@@ -9,10 +9,10 @@ from io import StringIO
 from time import sleep
 
 from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled, NoTranscriptFound
-from src.yt_processing.downloader import yt_dlp_download
-from src.audio_processing.speech2text import create_audio_chunks, transcribe_with_faster_whisper
-from src.utils.config import TEMP_AUDIO_DIR
-from src.utils.loggers import CustomLogger
+from notes_ai.unsorted.yt_processing.downloader import yt_dlp_download
+from notes_ai.unsorted.audio_processing.speech2text import create_audio_chunks, transcribe_with_faster_whisper
+from notes_ai.utils.config import TEMP_AUDIO_DIR
+from notes_ai.utils.loggers import CustomLogger
 
 
 def _strip_vtt_markup_preserve_text(line: str) -> str:

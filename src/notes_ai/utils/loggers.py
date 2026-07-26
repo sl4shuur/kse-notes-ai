@@ -1,6 +1,6 @@
 import logging
 
-SUCCESS_LEVEL = 69
+SUCCESS_LEVEL = 69 
 logging.addLevelName(SUCCESS_LEVEL, "SUCCESS")
 
 
