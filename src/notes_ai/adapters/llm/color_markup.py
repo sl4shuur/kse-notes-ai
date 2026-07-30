@@ -134,6 +134,7 @@ class Highlighter:
     def __init__(self, api_key: str, model = "openai/gpt-oss-20b"):
            self.api_key = api_key
            self.groq_client = Groq(api_key=api_key)
+           self.model =model
       
     def _format_learning_aids(outline: str) -> str:
         """

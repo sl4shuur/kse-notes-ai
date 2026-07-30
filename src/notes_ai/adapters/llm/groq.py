@@ -320,6 +320,7 @@ class GroqLLMClient:
    def __init__(self, api_key: str, model = "openai/gpt-oss-120b"):
        self.api_key = api_key
        self.groq_client = Groq(api_key=api_key)
+       self.model =model
 
 
 
