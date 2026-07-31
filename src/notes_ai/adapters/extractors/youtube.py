@@ -1,12 +1,6 @@
 from notes_ai.interfaces.extractor import TextExtractor
 from notes_ai.models import Source, ExtractedContent
 
-class YouTubeExtractor(TextExtractor):
-    def supports(self, source: Source) -> bool:
-        return source.type == "youtube"
-
-    from notes_ai.interfaces.extractor import TextExtractor
-from notes_ai.models import Source, ExtractedContent
 
 import re
 import html
@@ -166,7 +160,7 @@ class YouTubeExtractor:
             return None
 
 
-    def _get_video_id_from_url(url: str) -> str:
+    def _get_video_id_from_url(self, url: str) -> str:
         """Extract the YouTube video ID from a URL."""
         # Patterns to match various YouTube URL formats
         patterns = [
@@ -180,7 +174,7 @@ class YouTubeExtractor:
                 return match.group(1)
         raise ValueError("Invalid YouTube URL: Unable to extract video ID.")
 
-    def get_yt_transcript(self,source: Source, logger: CustomLogger) -> tuple[str, str] | None:
+    def get_yt_transcript(self,source: Source, logger: CustomLogger) -> ExtractedContent | None:
         """
         Download YouTube subtitles.
 
@@ -223,7 +217,7 @@ class YouTubeExtractor:
             # transcript_data now is a list of FetchedTranscriptSnippet objects with 'text', 'start', 'duration' attributes
             full_text = " ".join(item.text for item in transcript_data)
 
-            return full_text, transcript.language_code
+            return ExtractedContent( full_text,metadata =  {"lang_code" : transcript.language_code})
 
         except TranscriptsDisabled:
             logger.warning("Transcripts are disabled for this video.")
@@ -248,7 +242,7 @@ class YouTubeExtractor:
         return re.match(YOUTUBE_URL_PATTERN, url) is not None
 
 
-    async def extract(self, source : Source, chunk_duration_ms: int, logger: CustomLogger, force_whisper: bool = False) -> str:
+    async def extract(self, source : Source, chunk_duration_ms: int, logger: CustomLogger, force_whisper: bool = False) -> ExtractedContent:
         """
         Generate a transcription for a YouTube video URL.
 
@@ -264,11 +258,10 @@ class YouTubeExtractor:
         logger.info(f"Starting transcription for YouTube URL: {yt_url}")
         # 1. Attempt to get the transcript directly (if force_whisper is False)
         if not force_whisper:
-            result = self.extract(yt_url, logger)
+            result =  self.get_yt_transcript(source, logger)
             if result:
-                transcript, lang_code = result
-                logger.info(f"Transcript extracted via YT subtitles. Language: {lang_code}")
-                return transcript
+                logger.info(f"Transcript extracted via YT subtitles. Language: {result.metadata["lang_code"]}")
+                return result
         # If transcript extraction fails, download the audio
         audio_file = yt_dlp_download(
             yt_url, logger=logger, output_dir=TEMP_AUDIO_DIR)
@@ -281,4 +274,4 @@ class YouTubeExtractor:
         transcription = transcribe_with_faster_whisper(chunks, logger)
         logger.info("Completed transcription.")
 
-        return transcription
+        return ExtractedContent(transcription, {})

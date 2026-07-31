@@ -34,7 +34,9 @@ def _build_ydl_opts(
         base.update(
             {
                 "format": f"bestaudio[ext={audio_format}]/bestaudio/best",
-                "postprocessors": [],
+                "postprocessors": [{"key": "FFmpegExtractAudio",
+                    "preferredcodec": audio_format,
+                    "preferredquality": audio_quality}],
             }
         )
     else:  # video
@@ -73,7 +75,7 @@ def yt_dlp_download(
     download_type: DownloadType = "audio",
     audio_format: AudioFormat = "mp3",
     audio_quality: AudioQuality = "320",
-    player_clients: tuple[str, ...] = ("android", "ios", "web"),
+    player_clients: tuple[str, ...] = ("android", "ios", "web", "android_vr"),
 ) -> Path:
     """
     Download from YouTube via yt-dlp.
