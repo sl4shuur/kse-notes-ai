@@ -26,7 +26,7 @@ class YouTubeExtractor:
         return source.type == "youtube"
 
     
-    def _strip_vtt_markup_preserve_text(line: str) -> str:
+    def _strip_vtt_markup_preserve_text(self, line: str) -> str:
         """Remove WebVTT inline timing/markup while preserving human text and punctuation."""
         t = line
         # Remove inline timing tags like <00:00:03.360>
@@ -43,7 +43,7 @@ class YouTubeExtractor:
         return t
 
 
-    def _normalize_for_duplicate_check(line: str) -> str:
+    def _normalize_for_duplicate_check(self, line: str) -> str:
         """Normalize line for duplicate detection: lowercase, remove punctuation, collapse spaces."""
         t = line.lower()
         # Remove punctuation but keep letters/numbers/spaces (Latin+Cyrillic friendly)
@@ -52,7 +52,7 @@ class YouTubeExtractor:
         return t
 
 
-    def _normalize_whitespace(text: str, keep_newlines: bool = True) -> str:
+    def _normalize_whitespace(self, text: str, keep_newlines: bool = True) -> str:
         """Decode HTML entities, replace NBSPs with regular spaces, collapse spaces."""
         # 1) Decode HTML entities like &nbsp;, &amp;, &quot;, etc.
         t = html.unescape(text)
@@ -128,7 +128,7 @@ class YouTubeExtractor:
         return text
 
 
-    def _get_yt_lang(url: str, logger: CustomLogger) -> str | None:
+    def _get_yt_lang(self, url: str, logger: CustomLogger) -> str | None:
         """Extract the language code from a YouTube URL if present."""
         info_opt = {
             'quiet': True,
