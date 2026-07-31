@@ -54,7 +54,7 @@ class ImageExtractor:
 
 
 
-    def __init__(self,api_key, logger = CustomLogger("ImageExtractor")):
+    def __init__(self,api_key, logger: CustomLogger):
         self.logger= logger
         self.api_key = api_key
 
