@@ -80,7 +80,7 @@ class ImageExtractor:
 
         for source in sources:
             image_name = Path(source.location).name
-            base64_image = self.encode_image(source.location)
+            base64_image = self.encode_image(source)
             user_content.append(
                 {
                     "type": "image_url",
@@ -173,10 +173,10 @@ class ImageExtractor:
         Returns:
             str: Combined OCR text from all images.
         """
-        client = Groq()
-        image_paths = [source.location for source in sources]
-        logger.debug(f"Starting batch OCR for {len(image_paths)} images")
-        messages = self._build_batch_prompt(image_paths, logger, separator)
+        client = Groq(api_key=self.api_key)
+ 
+        logger.debug(f"Starting batch OCR for {len(sources)} images")
+        messages = self._build_batch_prompt(sources, logger, separator)
         chat_completion = client.chat.completions.create(
             messages=messages,  # type: ignore
             model=model,
@@ -189,7 +189,7 @@ class ImageExtractor:
         return ExtractedContent(ocr_text, metadata = {})  
       
     def extract(self, source: Source | list[Source]):
-         if source is list:
+         if isinstance(source, list):
               return self.batch_img2text(sources=source,logger = self.logger)
          else: 
               return self.single_img2text(source=source,logger = self.logger)     

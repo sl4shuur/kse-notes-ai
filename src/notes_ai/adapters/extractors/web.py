@@ -3,7 +3,7 @@ import asyncio
 import trafilatura
 from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
 from concurrent.futures import ProcessPoolExecutor
-import logging
+
 from notes_ai.models import Source, ExtractedContent
 
 
@@ -70,9 +70,8 @@ class WebExtractor:
 
 
 
-    def __init__(self):
-        self.logger = CustomLogger("WebExtractor")
-
+    def __init__(self, logger: CustomLogger):
+          self.logger = logger
 
 
     def supports(self, source: Source) -> bool:
@@ -81,7 +80,7 @@ class WebExtractor:
 
 
 
-    async def extract(self, source: Source, include_metadata: bool = True, ) -> ExtractedContent:
+    async def extract(self, source: Source, include_metadata: bool = True) -> ExtractedContent:
         """
         Extract article text from a web page using trafilatura with Playwright fallback.
 
