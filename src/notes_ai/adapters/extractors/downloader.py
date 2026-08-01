@@ -3,7 +3,7 @@ from typing import Literal
 import yt_dlp
 from yt_dlp.utils import DownloadError
 from notes_ai.utils.logging_config import CustomLogger
-
+from notes_ai.interfaces.exceptions import ExtractionError
 DownloadType = Literal["audio", "video"]
 AudioFormat = Literal["mp3", "m4a", "wav", "opus"]
 AudioQuality = Literal["128", "192", "256", "320"]
@@ -34,7 +34,9 @@ def _build_ydl_opts(
         base.update(
             {
                 "format": f"bestaudio[ext={audio_format}]/bestaudio/best",
-                "postprocessors": [],
+                "postprocessors": [{"key": "FFmpegExtractAudio",
+                    "preferredcodec": audio_format,
+                    "preferredquality": audio_quality}],
             }
         )
     else:  # video
@@ -73,7 +75,7 @@ def yt_dlp_download(
     download_type: DownloadType = "audio",
     audio_format: AudioFormat = "mp3",
     audio_quality: AudioQuality = "320",
-    player_clients: tuple[str, ...] = ("android", "ios", "web"),
+    player_clients: tuple[str, ...] = ("android", "ios", "web", "android_vr"),
 ) -> Path:
     """
     Download from YouTube via yt-dlp.
@@ -123,6 +125,6 @@ def yt_dlp_download(
             last_error = e
             logger.error(f"yt-dlp unexpected error: {e}")
 
-    raise RuntimeError(
+    raise ExtractionError(
         f"All clients failed: {player_clients}. Last error: {last_error}"
     ) from last_error
