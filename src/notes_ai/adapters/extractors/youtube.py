@@ -19,7 +19,18 @@ from notes_ai.utils.loggers import CustomLogger
 from notes_ai.interfaces.exceptions import ExtractionError
 
 
+def is_valid_youtube_url(url: str) -> bool:
+        """
+        Validate if the provided URL is a valid YouTube link.
 
+        Args:
+            url (str): The URL to validate.
+
+        Returns:
+            bool: True if the URL is a valid YouTube link, False otherwise.
+        """
+        YOUTUBE_URL_PATTERN = r"^(https?://)?(www\.)?(youtube\.com|youtu\.be)/.+$"
+        return re.match(YOUTUBE_URL_PATTERN, url) is not None
 
 class YouTubeExtractor:
     def supports(self, source: Source) -> bool:
@@ -228,18 +239,7 @@ class YouTubeExtractor:
             return None
 
 
-    def is_valid_youtube_url(url: str) -> bool:
-        """
-        Validate if the provided URL is a valid YouTube link.
-
-        Args:
-            url (str): The URL to validate.
-
-        Returns:
-            bool: True if the URL is a valid YouTube link, False otherwise.
-        """
-        YOUTUBE_URL_PATTERN = r"^(https?://)?(www\.)?(youtube\.com|youtu\.be)/.+$"
-        return re.match(YOUTUBE_URL_PATTERN, url) is not None
+    
 
 
     async def extract(self, source : Source, chunk_duration_ms: int, logger: CustomLogger, force_whisper: bool = False) -> ExtractedContent:
