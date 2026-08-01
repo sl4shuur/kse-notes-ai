@@ -16,7 +16,7 @@ from notes_ai.adapters.extractors.downloader import yt_dlp_download
 from notes_ai.unsorted.audio_processing.speech2text import create_audio_chunks, transcribe_with_faster_whisper
 from notes_ai.utils.config import TEMP_AUDIO_DIR
 from notes_ai.utils.loggers import CustomLogger
-
+from notes_ai.interfaces.exceptions import ExtractionError
 
 
 
@@ -172,7 +172,7 @@ class YouTubeExtractor:
             match = re.search(pattern, url)
             if match:
                 return match.group(1)
-        raise ValueError("Invalid YouTube URL: Unable to extract video ID.")
+        raise ExtractionError("Invalid YouTube URL: Unable to extract video ID.")
 
     def get_yt_transcript(self,source: Source, logger: CustomLogger) -> ExtractedContent | None:
         """
