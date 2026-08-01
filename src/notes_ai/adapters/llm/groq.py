@@ -4,7 +4,9 @@ from pathlib import Path
 
 from notes_ai.utils.config import TEST_OUTPUT_DIR
 from notes_ai.utils.logging_config import CustomLogger
-
+from notes_ai.models import ExtractedContent, Note
+from datetime import datetime
+from dataclasses import replace  
 SYSTEM_PROMPT = r"""<system>
 <role>
 You are an expert educational content assistant specializing in transforming raw transcripts into detailed, well-structured study notes with rich semantic markup.
@@ -324,7 +326,7 @@ class GroqLLMClient:
 
 
 
-   def generate(self,source_content: str, logger: CustomLogger, user_prompt = USER_PROMPT_TEMPLATE) -> str:
+   def generate(self,source_content: ExtractedContent, logger: CustomLogger, user_prompt = USER_PROMPT_TEMPLATE) -> Note:
        prompt = user_prompt.format(content=source_content)
 
     # Generate study notes
@@ -340,12 +342,20 @@ class GroqLLMClient:
 
        notes = str(response.choices[0].message.content)
        logger.debug("Generated study notes.")
-       return notes
+       return Note(
+        title=getattr(source_content, "title", "Study Notes"),
+        content=notes,
+        date_created=datetime.now(),
+        metadata={
+            "model": self.model,
+            "temperature": 0.3,
+        },
+    )
 
 
 
    def enrich_with_examples_and_metaphors(self,
-    outline: str, source_content: str,  logger: CustomLogger, user_prompt = ENRICH_USER_PROMPT) -> str:
+    outline: str, note: Note,  logger: CustomLogger, user_prompt = ENRICH_USER_PROMPT) -> Note:
     """
     Agent 2: Add Example and Metaphor blocks to the outline.
 
@@ -358,7 +368,7 @@ class GroqLLMClient:
         Enriched outline with Example and Metaphor blocks
     """
     prompt = user_prompt.format(
-        outline=outline, transcript=source_content)
+        outline=outline, transcript=note.content)
 
     response = self.groq_client.chat.completions.create(
         model=self.model,
@@ -374,20 +384,27 @@ class GroqLLMClient:
     msg = "Enriched outline with examples and metaphors (Step 2/2)." + \
         f"\n{enriched_outline[:1000]}..."
     logger.debug(msg)
-    return enriched_outline
+    return replace(
+        note,
+        content=enriched_outline,
+        metadata={
+            **note.metadata,
+            "enriched": True,
+        },
+    )
 
-   def generate_raw_outline(self, source_content: str, logger: CustomLogger) -> str:
+   def generate_raw_outline(self, note: Note, logger: CustomLogger) -> Note:
     """
     Agent 1: Generate outline with bold terms and strategic learning aids.
 
     Args:
-        source_content: Raw transcript text
+        Note: Raw note
         logger: Logger instance
 
     Returns:
         Structured Markdown outline with **bold** terms and learning aids
     """
-    prompt = RAW_OUTLINE_USER_PROMPT.format(content=source_content)
+    prompt = RAW_OUTLINE_USER_PROMPT.format(content=note.content)
 
     response = self.groq_client.chat.completions.create(
         model=self.model,
@@ -395,14 +412,21 @@ class GroqLLMClient:
             {"role": "system", "content": RAW_OUTLINE_SYSTEM_PROMPT},
             {"role": "user", "content": prompt},
         ],
-        temperature=0.4,  # Slightly higher for creative examples
+        temperature=0.3,  
         max_tokens=8192,
     )
 
     outline = str(response.choices[0].message.content)
     logger.debug(
         f"Generated outline with learning aids (Step 1/2)\n{outline[:5000]}...")
-    return outline
+    return replace(
+            note,
+            content=outline,
+            metadata={
+                **note.metadata,
+                "outlined": True,
+            },
+        )
 
       
    

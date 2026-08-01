@@ -2,6 +2,8 @@ import re
 import json
 from groq import Groq
 from notes_ai.utils.logging_config import CustomLogger
+from notes_ai.models import Note
+from dataclasses import replace
 
 THREESHOLD_ADJACENT = 200  # Characters
 COLOR_CLUSTERS = {
@@ -130,7 +132,7 @@ Return ONLY a valid JSON mapping:
 
 
 
-class Highlighter:
+class HighlighterLLM:
     def __init__(self, api_key: str, model = "openai/gpt-oss-20b"):
            self.api_key = api_key
            self.groq_client = Groq(api_key=api_key)
@@ -314,20 +316,28 @@ class Highlighter:
         return result
 
 
-    def apply_color_markup(self, outline: str, logger: CustomLogger) -> str:
+    async def apply_color_markup(self, note: Note, logger: CustomLogger) -> Note:
         """
         Apply color markup to bold terms with intelligent grouping.
         Each occurrence of a term gets its own color based on position.
         """
+        outline = note.content
         matches = self._extract_bold_matches(outline)
         if not matches:
             logger.debug("No bold terms found")
-            return self._format_learning_aids(outline)
+            return 
 
         filtered = self._filter_prohibitive(matches)
         if not filtered:
             logger.debug("No terms to colorize after filtering")
-            return self._format_learning_aids(outline)
+            return replace(
+                        note,
+                        content=self._format_learning_aids(outline),
+                        metadata={
+                            **note.metadata,
+                            "formatted": True,
+                        },
+                    )
 
         unique_terms = list(dict.fromkeys([m.group(1) for m in filtered]))
         logger.debug(f"Found {len(unique_terms)} unique bold terms")
@@ -346,4 +356,11 @@ class Highlighter:
         formatted_outline = self._format_learning_aids(replaced)
         logger.debug(
             f"Applied color markup to {len(position_to_color)} term occurrences")
-        return formatted_outline
+        return replace(
+                note,
+                content=formatted_outline,
+                metadata={
+                    **note.metadata,
+                    "formatted": True,
+                },
+            )
