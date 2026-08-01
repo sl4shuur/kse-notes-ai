@@ -5,8 +5,8 @@ from dataclasses import dataclass
 from groq import Groq
 
 
-from notes_ai.unsorted.art_generator.plt_vis import generate_plt_vis_code, save_plt_vis_img
-from notes_ai.unsorted.art_generator.mermaid_vis import generate_mermaid_code
+from notes_ai.under_construction.art_generator.plt_vis import generate_plt_vis_code, save_plt_vis_img
+from notes_ai.under_construction.art_generator.mermaid_vis import generate_mermaid_code
 
 
 @dataclass
