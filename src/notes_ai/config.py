@@ -1,9 +1,7 @@
 import os
 import dotenv
-try:
-    from .config_helper import find_project_root
-except ImportError:
-    from config_helper import find_project_root
+from notes_ai.utils.config_helper import find_project_root
+
 
 
 # Base of the project
