@@ -1,9 +1,9 @@
 import re
 import json
-from groq import Groq
 from notes_ai.utils.logging_config import CustomLogger
 from notes_ai.models import Note
 from dataclasses import replace
+from notes_ai.interfaces.llm import LLMClient
 
 THREESHOLD_ADJACENT = 200  # Characters
 COLOR_CLUSTERS = {
@@ -132,11 +132,9 @@ Return ONLY a valid JSON mapping:
 
 
 
-class HighlighterLLM:
-    def __init__(self, api_key: str, model = "openai/gpt-oss-20b"):
-           self.api_key = api_key
-           self.groq_client = Groq(api_key=api_key)
-           self.model =model
+class ColorCategorizer:
+    def __init__(self, llm: LLMClient):
+           self.llm = llm
       
     def _format_learning_aids(outline: str) -> str:
         """
@@ -225,7 +223,7 @@ class HighlighterLLM:
         return shade
 
 
-    def _categorize_terms(self,terms: list[str], outline: str, logger: CustomLogger, prompt = COLOR_CATEGORIZATION_PROMPT) -> dict[str, str]:
+    async def _categorize_terms(self,terms: list[str], outline: str, logger: CustomLogger, prompt = COLOR_CATEGORIZATION_PROMPT) -> dict[str, str]:
         """
         Use LLM to categorize terms into color clusters.
         """
@@ -233,14 +231,9 @@ class HighlighterLLM:
         prompt = prompt.format(
             terms_list=terms_list, outline_snippet=outline)
 
-        response = self.groq_client.chat.completions.create(
-            model=self.model,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.1,
-            max_tokens=8192,
-        )
 
-        result_text = response.choices[0].message.content
+
+        result_text = str(await self.llm.complete(user_prompt=prompt, system_prompt = ""))
         logger.debug(f"Categorization result:\n{result_text}")
 
         try:
