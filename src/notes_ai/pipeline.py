@@ -6,7 +6,7 @@ from notes_ai.models import Source, Note
 from notes_ai.interfaces.exceptions import UnsupportedSourceError
 from notes_ai.adapters.extractors.youtube import is_valid_youtube_url
 from notes_ai.utils.loggers import CustomLogger
-from notes_ai.adapters.llm.final_cleaner import clean_note
+from notes_ai.adapters.llm_services.final_cleaner import clean_note
 from pathlib import Path
 from typing import Any
 import trafilatura
@@ -14,6 +14,10 @@ from yt_dlp import YoutubeDL
 import fitz
 from PIL import Image
 from mutagen import File as AudioFile
+from notes_ai.adapters.llm_services.note_enricher import NoteEnricher
+from notes_ai.adapters.llm_services.color_markup import ColorCategorizer
+from notes_ai.adapters.llm_services.outlier_generator import OutlineGenerator
+from notes_ai.adapters.llm_services.note_generator import NoteGenerator
 
 AUDIO_EXTENSIONS = {".mp3", ".wav", ".m4a", ".opus", ".flac", ".aac"}
 VIDEO_EXTENSIONS = {".mp4", ".mkv", ".avi", ".mov", ".webm"}
@@ -207,21 +211,44 @@ async def create_note(
     extractors: list[TextExtractor],
     llm: LLMClient,
     store: NoteStore,
+    logger:CustomLogger,
+    outline = False,
     enrich = False,
-    color_markup = False,
+    color_markup = False
 
 ) -> Note:
     extractor = next(
         (item for item in extractors if item.supports(source)),
         None,
     )
+    
 
     if extractor is None:
         raise UnsupportedSourceError(source.location)
 
-    content = await extractor.extract(source)
-    note = await llm.generate(content)
-    cleaned_note =  clean_note(note)
+    content = await extractor.extract(source, logger = logger)
+    generator = NoteGenerator(llm)
+    
+    base_note = await generator.generate(content, logger)
+    outlined = None
+
+    if outline:
+      outliner = OutlineGenerator(llm)
+      outlined = await outliner.outline(outlined)
+
+    if enrich:
+      enricher = NoteEnricher(llm)
+      outlined = await enricher.enrich(outlined, base_note)
+
+    if color_markup:
+      colorizer = ColorCategorizer(llm)
+      outlined = await colorizer.apply_color_markup(outlined)
+
+    if outlined:
+      cleaned_note = clean_note(outlined)  
+    else:
+      cleaned_note = clean_note(base_note)  
+          
     await store.save(cleaned_note)
 
-    return note
+    return cleaned_note
