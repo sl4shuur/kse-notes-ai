@@ -94,16 +94,19 @@ ENRICH_USER_PROMPT = """<user>
 class NoteEnricher:
    def __init__(self, llm: LLMClient):
         self.llm = llm
-   async def enrich(self, outline: str, note: Note,  logger: CustomLogger, user_prompt = ENRICH_USER_PROMPT, system_prompt = ENRICH_SYSTEM_PROMPT) -> Note:
+   async def enrich(self, outline:Note, raw_note: Note,  logger: CustomLogger, user_prompt = ENRICH_USER_PROMPT, system_prompt = ENRICH_SYSTEM_PROMPT) -> Note:
+        prompt = ENRICH_USER_PROMPT.format(
+        outline=outline.content, transcript=raw_note.content)
+
         enriched_outline = str(await self.llm.complete(user_prompt= user_prompt, system_prompt= system_prompt))
         msg = "Enriched outline with examples and metaphors (Step 2/2)." + \
             f"\n{enriched_outline[:1000]}..."
         logger.debug(msg)
         return replace(
-            note,
+            outline,
             content=enriched_outline,
             metadata={
-                **note.metadata,
+                **outline.metadata,
                 "enriched": True,
             },
         )

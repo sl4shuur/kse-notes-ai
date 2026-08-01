@@ -127,7 +127,7 @@ class NoteGenerator:
     def __init__(self, llm: LLMClient):
         self.llm = llm
     async def generate(self,source_content: ExtractedContent, logger: CustomLogger, user_prompt = USER_PROMPT_TEMPLATE, system_prompt = SYSTEM_PROMPT) -> Note:
-        prompt = user_prompt.format(content=source_content)
+        prompt = user_prompt.format(content=source_content.text)
 
         notes =str( await self.llm.complete(user_prompt = user_prompt, system_prompt = system_prompt ))
         logger.debug("Generated study notes.")
