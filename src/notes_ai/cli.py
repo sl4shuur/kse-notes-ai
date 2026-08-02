@@ -5,7 +5,9 @@ import asyncio
 import os
 import sys
 from pathlib import Path
-
+import logging
+from notes_ai.utils.logging_config import setup_logging
+import asyncio
 import dotenv
 
 # Load .env from workspace root if present
@@ -90,12 +92,13 @@ def main() -> None:
         action="store_true",
         help="Enable debug logging.",
     )
-
+    
     args = parser.parse_args()
-
-    log_level = "DEBUG" if args.verbose else "INFO"
-    logger = CustomLogger("notes_ai", level=log_level)
-
+    logger = setup_logging(
+    level=logging.DEBUG,
+    logger_class=CustomLogger,
+    logger_name="notes_ai",
+    )
     groq_key = os.getenv("GROQ_API_KEY", "")
     if not groq_key or groq_key == "placeholder_key_for_import":
         logger.error("GROQ_API_KEY environment variable is not set. Please set it in your environment or .env file.")
@@ -115,6 +118,7 @@ def main() -> None:
         logger.info(f"[{idx}/{len(args.sources)}] Processing source: {source_path}")
         try:
             input_type = process_content(source_path, logger=logger)
+            logger.info(f"Source detected:{input_type}")
         except Exception as e:
             logger.error(f"Unsupported source or file not found ({source_path}): {e}")
             continue
