@@ -76,11 +76,11 @@ class WebExtractor:
 
     def supports(self, source: Source) -> bool:
         source_type = source.input_type.lower()
-        return source_type in ["web", "website", "url"]
+        return source_type == "web"
 
 
 
-    async def extract(self, source: Source, include_metadata: bool = True) -> ExtractedContent:
+    async def extract(self, source: Source, include_metadata: bool = True, **kwargs) -> ExtractedContent:
         """
         Extract article text from a web page using trafilatura with Playwright fallback.
 

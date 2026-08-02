@@ -204,6 +204,16 @@ def create_source(location: str, logger: CustomLogger) -> Source:
         metadata=metadata,
     )
 
+async def extract_text(source: Source, extractors: list[TextExtractor], logger: CustomLogger):
+   extractor = next(
+           (item for item in extractors if item.supports(source)),
+           None,
+       )
+   if extractor is None:
+           raise UnsupportedSourceError(source.location)
+
+   content = await extractor.extract(source, logger = logger, chunk_duration_ms = 120)
+   return content
 
 
 async def create_note(
@@ -248,7 +258,7 @@ async def create_note(
       cleaned_note = clean_note(outlined)  
     else:
       cleaned_note = clean_note(base_note)  
-          
+
     await store.save(cleaned_note)
 
     return cleaned_note

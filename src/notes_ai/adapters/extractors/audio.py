@@ -137,7 +137,7 @@ class AudioExtractor:
     def supports(self, source: Source) -> bool:
         return source.input_type.lower() == "audio"
 
-    async def extract(self, source: Source) -> ExtractedContent:
+    async def extract(self, source: Source,**kwargs) -> ExtractedContent:
         path = Path(source.location)
 
         if not path.exists():

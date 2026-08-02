@@ -188,7 +188,7 @@ class ImageExtractor:
         logger.debug(f"Batch OCR result: {ocr_text[:100]}")
         return ExtractedContent(ocr_text, metadata = {})  
       
-    def extract(self, source: Source | list[Source]):
+    def extract(self, source: Source | list[Source], **kwargs):
          if isinstance(source, list):
               return self.batch_img2text(sources=source,logger = self.logger)
          else: 
