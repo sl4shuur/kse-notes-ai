@@ -100,7 +100,7 @@ class NoteEnricher:
 
         enriched_outline = str(await self.llm.complete(user_prompt= prompt, system_prompt= system_prompt))
         msg = "Enriched outline with examples and metaphors (Step 2/2)." + \
-            f"\n{enriched_outline[:1000]}..."
+            f"\n{enriched_outline[:10]}..."
         logger.debug(msg)
         return replace(
             outline,
