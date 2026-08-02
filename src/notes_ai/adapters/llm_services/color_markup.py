@@ -136,7 +136,7 @@ class ColorCategorizer:
     def __init__(self, llm: LLMClient):
            self.llm = llm
       
-    def _format_learning_aids(outline: str) -> str:
+    def _format_learning_aids(self, outline: str) -> str:
         """
         Normalize Example/Metaphor headers to LaTeX and keep content clean.
         """
@@ -177,7 +177,7 @@ class ColorCategorizer:
         return outline
 
 
-    def _get_bold_terms(text: str) -> list[tuple[str, int]]:
+    def _get_bold_terms(self, text: str) -> list[tuple[str, int]]:
         """
         Extract all bold terms from markdown with their positions.
         """
@@ -189,7 +189,7 @@ class ColorCategorizer:
         return terms
 
 
-    def _find_adjacent_terms(terms: list[tuple[str, int]], threshold: int = 20) -> list[list[int]]:
+    def _find_adjacent_terms(self, terms: list[tuple[str, int]], threshold: int = 20) -> list[list[int]]:
         """
         Group term indices that are close together (adjacent/near).
         """
@@ -244,12 +244,12 @@ class ColorCategorizer:
             return {term: "neutral" for term in terms}
 
 
-    def _extract_bold_matches(text: str) -> list[re.Match]:
+    def _extract_bold_matches(self, text: str) -> list[re.Match]:
         """Return all **bold** matches with positions."""
         return list(re.finditer(r'\*\*([^*]+)\*\*', text))
 
 
-    def _filter_prohibitive(matches: list[re.Match]) -> list[re.Match]:
+    def _filter_prohibitive(self, matches: list[re.Match]) -> list[re.Match]:
         """Drop Example/Metaphor headers from matches."""
         prohibitive = {"example", "metaphor", "example:", "metaphor:"}
         return [
@@ -293,7 +293,7 @@ class ColorCategorizer:
         return position_to_color
 
 
-    def _replace_terms_once(text: str, position_to_color: dict[int, tuple[str, str]]) -> str:
+    def _replace_terms_once(self, text: str, position_to_color: dict[int, tuple[str, str]]) -> str:
         """Replace bold terms occurrence-by-occurrence, starting from the end."""
         result = text
         sorted_positions = sorted(

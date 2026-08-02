@@ -124,7 +124,7 @@ class OutlineGenerator:
         prompt = RAW_OUTLINE_USER_PROMPT.format(content=note.content)
         outline = str(await self.llm.complete(user_prompt= prompt, system_prompt = RAW_OUTLINE_SYSTEM_PROMPT))
         logger.debug(
-            f"Generated outline with learning aids (Step 1/2)\n{outline[:5000]}...")
+            f"Generated outline with learning aids (Step 1/2)\n{outline[:50]}...")
         return replace(
                 note,
                 content=outline,
