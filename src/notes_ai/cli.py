@@ -103,16 +103,16 @@ def main() -> None:
     if not groq_key or groq_key == "placeholder_key_for_import":
         logger.error("GROQ_API_KEY environment variable is not set. Please set it in your environment or .env file.")
         sys.exit(1)
-
+    llm = GroqLLMClient(api_key=groq_key)
+    store = MarkdownNoteStore(output_dir=args.output_dir)
     extractors = [
         YouTubeExtractor(logger= logger),
         WebExtractor(logger=logger),
         PDFExtractor(logger=logger),
-        ImageExtractor(api_key=groq_key, logger=logger),
+        ImageExtractor(llm=llm, logger=logger),
         AudioExtractor(logger=logger),
     ]
-    llm = GroqLLMClient(api_key=groq_key)
-    store = MarkdownNoteStore(output_dir=args.output_dir)
+    
 
     for idx, source_path in enumerate(args.sources, start=1):
         logger.info(f"[{idx}/{len(args.sources)}] Processing source: {source_path}")

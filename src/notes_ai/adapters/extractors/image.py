@@ -18,7 +18,7 @@ from notes_ai.utils.logging_config import CustomLogger
 # meta-llama/llama-4-scout-17b-16e-instruct
 
 
-OCR_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
+OCR_MODEL = "qwen/qwen3.6-27b"
 SYSTEM_PROMPT = (
     "You are an OCR assistant. Follow the user's rules exactly. "
     "Return only the text present in the image."
@@ -48,17 +48,29 @@ PROMPT = (
     "- If nothing is readable, return an empty string."
 )
 
-
+        
 
 class ImageExtractor:
 
 
 
-    def __init__(self,api_key, logger: CustomLogger):
+    def __init__(self,llm, logger: CustomLogger):
         self.logger= logger
-        self.api_key = api_key
-
-    
+        self.llm = llm
+    async def _run_ocr_completion(
+        self,
+        image_payloads: list[str],
+        logger: CustomLogger,
+        separator: str = "\n\n",
+    ) -> str:
+        """Shared call into LLMClient for both single and batch OCR."""
+        result = await self.llm.complete(
+            user_prompt=PROMPT,
+            system_prompt=SYSTEM_PROMPT,
+            images=image_payloads,   # base64 strings; LLMClient builds the image_url blocks
+        )
+        return str(result)         
+        
     def _build_batch_prompt(self, sources : list[Source], logger: CustomLogger, separator: str) -> list[dict]:
         messages = [
             {
@@ -114,83 +126,61 @@ class ImageExtractor:
 
 
 
-    def single_img2text(self, source :Source, logger: CustomLogger, model: str = OCR_MODEL) -> str:
-        client = Groq(api_key= self.api_key)
+
+    async def single_img2text(self, source: Source, logger: CustomLogger) -> ExtractedContent:
         image_path = source.location
         image_name = Path(image_path).name
+        base64_image = self.encode_image(source=source)
 
-        # Getting the base64 string
-        base64_image = self.encode_image(source = source)
-
-        chat_completion = client.chat.completions.create(
-            messages=[
-                {
-                    "role": "system",
-                    "content": SYSTEM_PROMPT,
-                },
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": PROMPT
-                        },
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/jpeg;base64,{base64_image}",
-                            },
-                        },
-                    ],
-                },
-            ],
-            model=model,
+        ocr_text = await self.llm.complete(
+            user_prompt=PROMPT,
+            system_prompt=SYSTEM_PROMPT,
+            images=[base64_image],
+            model=OCR_MODEL,
             temperature=0.0,
-            max_tokens=8192,
-            top_p=1.0,
+            max_tokens=2048,
         )
-        ocr_text = str(chat_completion.choices[0].message.content)
+
         logger.debug(f"OCR result for image {image_name}: {ocr_text[:50]}")
-        return ExtractedContent(ocr_text, metadata = {}) 
+        return ExtractedContent(ocr_text, metadata={})
 
 
-
-    def batch_img2text(self, 
-    sources: list[Source],
-    logger: CustomLogger,
-    model: str = OCR_MODEL,
-    separator: str = "\n\n"
-) -> str:
+    async def batch_img2text(
+        self,
+        sources: list[Source],
+        logger: CustomLogger,
+        separator: str = "\n\n",
+    ) -> ExtractedContent:
         """
         Extract text from multiple images and combine results.
 
         Args:
-            image_paths: List of paths to image files.
+            sources: List of Source objects pointing to image files.
             logger: Custom logger instance.
-            model: Groq vision model to use for OCR.
             separator: String to join results (default: double newline).
 
         Returns:
-            str: Combined OCR text from all images.
+            ExtractedContent: Combined OCR text from all images.
         """
-        client = Groq(api_key=self.api_key)
- 
         logger.debug(f"Starting batch OCR for {len(sources)} images")
-        messages = self._build_batch_prompt(sources, logger, separator)
-        chat_completion = client.chat.completions.create(
-            messages=messages,  # type: ignore
-            model=model,
+
+        base64_images = [self.encode_image(source=s) for s in sources]
+
+        ocr_text = await self.llm.complete(
+            user_prompt=PROMPT,
+            system_prompt=SYSTEM_PROMPT,
+            images=base64_images,
+            model=OCR_MODEL,
             temperature=0.0,
-            max_tokens=8192,  # max amount is 8192
-            top_p=1.0,
+            max_tokens=2048,
         )
-        ocr_text = str(chat_completion.choices[0].message.content)
+
         logger.debug(f"Batch OCR result: {ocr_text[:100]}")
-        return ExtractedContent(ocr_text, metadata = {})  
+        return ExtractedContent(ocr_text, metadata={})
       
-    def extract(self, source: Source | list[Source], **kwargs):
+    async def extract(self, source: Source | list[Source], **kwargs):
          if isinstance(source, list):
-              return self.batch_img2text(sources=source,logger = self.logger)
+              return await self.batch_img2text(sources=source,logger = self.logger)
          else: 
-              return self.single_img2text(source=source,logger = self.logger)     
-              
+              return await self.single_img2text(source=source,logger = self.logger)     
+             
