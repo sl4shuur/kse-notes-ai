@@ -132,7 +132,7 @@ class PDFExtractor:
             or source.location.lower().endswith(".pdf")
         )
 
-    async def extract(self, source: Source) -> ExtractedContent:
+    async def extract(self, source: Source, **kwargs) -> ExtractedContent:
         pdf_path = Path(source.location)
 
         if not pdf_path.exists():

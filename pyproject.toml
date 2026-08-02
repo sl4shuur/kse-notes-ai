@@ -36,6 +36,8 @@ dependencies = [
     "markdown>=3.10",
     "seaborn>=0.13.2",
     "scikit-learn>=1.8.0",
+    # for audio
+    "mutagen>=1.47"
 ]
 
 [dependency-groups]

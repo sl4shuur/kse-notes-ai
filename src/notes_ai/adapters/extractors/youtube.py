@@ -13,17 +13,30 @@ from time import sleep
 
 from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled, NoTranscriptFound
 from notes_ai.adapters.extractors.downloader import yt_dlp_download
-from notes_ai.unsorted.audio_processing.speech2text import create_audio_chunks, transcribe_with_faster_whisper
-from notes_ai.utils.config import TEMP_AUDIO_DIR
+from notes_ai.adapters.extractors.audio import create_audio_chunks, transcribe_with_faster_whisper
+from notes_ai.config import TEMP_AUDIO_DIR
 from notes_ai.utils.loggers import CustomLogger
 from notes_ai.interfaces.exceptions import ExtractionError
 
 
+def is_valid_youtube_url(url: str) -> bool:
+        """
+        Validate if the provided URL is a valid YouTube link.
 
+        Args:
+            url (str): The URL to validate.
+
+        Returns:
+            bool: True if the URL is a valid YouTube link, False otherwise.
+        """
+        YOUTUBE_URL_PATTERN = r"^(https?://)?(www\.)?(youtube\.com|youtu\.be)/.+$"
+        return re.match(YOUTUBE_URL_PATTERN, url) is not None
 
 class YouTubeExtractor:
+    def __init__(self, logger: CustomLogger):
+              self.logger = logger
     def supports(self, source: Source) -> bool:
-        return source.type == "youtube"
+        return source.input_type == "youtube"
 
     
     def _strip_vtt_markup_preserve_text(self, line: str) -> str:
@@ -228,18 +241,7 @@ class YouTubeExtractor:
             return None
 
 
-    def is_valid_youtube_url(url: str) -> bool:
-        """
-        Validate if the provided URL is a valid YouTube link.
-
-        Args:
-            url (str): The URL to validate.
-
-        Returns:
-            bool: True if the URL is a valid YouTube link, False otherwise.
-        """
-        YOUTUBE_URL_PATTERN = r"^(https?://)?(www\.)?(youtube\.com|youtu\.be)/.+$"
-        return re.match(YOUTUBE_URL_PATTERN, url) is not None
+    
 
 
     async def extract(self, source : Source, chunk_duration_ms: int, logger: CustomLogger, force_whisper: bool = False) -> ExtractedContent:
