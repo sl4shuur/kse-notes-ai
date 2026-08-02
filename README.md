@@ -334,19 +334,17 @@ The phase is complete when:
 - [ ] secrets, caches, generated notes, and local environment files are not tracked
 - [ ] README instructions match the actual repository
 
-### Phase one progress
+### Phase 1 progress
 
-Phase one has been successfully completed. The legacy codebase was refactored into a structured Python package (`notes_ai`). Here is how each goal was accomplished:
+Legacy codebase was refactored into a structured Python package (`notes_ai`). Here is what we did:
 
-1. **Create the Python package**: The legacy application was restructured into a clean package under `src/notes_ai/`. We configured the CLI entry point in `pyproject.toml` (enabling `uv run notes-ai`), removed the legacy `main.py` orchestrator, and set up `cli.py` to handle environment and path resolutions.
-2. **Add shared models**: Built lightweight domain objects (`Source`, `ExtractedContent`, `Note`) using Python's `@dataclass` in `src/notes_ai/models.py`.
-3. **Define simple interfaces and custom exceptions**: Established strict `Protocol` contracts for `TextExtractor`, `LLMClient`, and `NoteStore` in `src/notes_ai/interfaces/`. Furthermore, we created `interfaces/exceptions.py` to define custom error classes (`UnsupportedSourceError`, `ExtractionError`, `LLMError`, `StorageError`), which accept an `extra_info` parameter for better error tracking.
-4. **Move external logic into adapters**: Third-party dependencies and integrations were isolated into `src/notes_ai/adapters/`. This encapsulates our extractors (YouTube, Web, PDF, Image, Audio), the `GroqLLMClient`, and the `MarkdownNoteStore`.
+1. **Create the Python package**: The application was restructured according to plan into a package under `src/notes_ai/`. We made the CLI entry point in `pyproject.toml` (enabling `uv run notes-ai`) and main logic is in pipeline with cli in main.py
+2. **Add shared models**: Built domain objects as requested (`Source`, `ExtractedContent`, `Note`) using Python's `@dataclass` in `src/notes_ai/models.py`.
+3. **Define simple interfaces and custom exceptions**: Established `Protocol` contracts for `TextExtractor`, `LLMClient`, and `NoteStore` in `src/notes_ai/interfaces/`, and `interfaces/exceptions.py` to define custom errors (`UnsupportedSourceError`, `ExtractionError`, `LLMError`, `StorageError`), which accept an `extra_info` parameter for better error tracking.
+4. **Move external logic into adapters**: Content extractions was moved to `src/notes_ai/adapters/`. This encapsulates our extractors (YouTube, Web, PDF, Image, Audio), the `GroqLLMClient`, and the `MarkdownNoteStore`, they now act as classes rather then bunch of functions.
 5. **Implement an advanced synthesis pipeline**: The `src/notes_ai/pipeline.py` orchestrator was built to handle end-to-end processing. It features format detection (`process_content`) and extensive metadata extraction (`extract_metadata`) using libraries like `trafilatura` (web), `YoutubeDL` (video), `fitz` (PDF), `mutagen` (audio), and PIL (images). The core `create_note` function delegates to the appropriate extractor, generates content via `NoteGenerator`, optionally applies modular enhancements (`OutlineGenerator`, `NoteEnricher`, `ColorCategorizer`), and scrubs the output with `clean_note`.
-6. **Preserve the current generation flow**: The legacy prompt engineering logic (including semantic coloring rules, examples, and metaphors) was successfully preserved inside `adapters/llm_services/note_generator.py`.
-7. **Centralize configuration**: `config.py` was created to standardize paths (`DATA_DIR`, `TEST_DATA_DIR`, `TEMP_AUDIO_DIR`, etc.) and handle `.env` validation. Logging was also centralized using a `CustomLogger` setup.
-8. **Add focused tests**: *Not yet implemented.* (The `tests/` directory and offline integration tests specified in the requirements have not been added to the repository yet).
-9. **Update documentation**: The README was updated to reflect the new architecture, and the CLI documentation was appended.
+6. **Centralize configuration**: `config.py` was created to standardize paths (`DATA_DIR`, `TEST_DATA_DIR`, `TEMP_AUDIO_DIR`, etc.) and handle `.env` validation. Logging was also centralized using a `CustomLogger`.
+7. **Update documentation**: CLI documentation was appended just below.
 
 #### CLI User Guide & Documentation
 
