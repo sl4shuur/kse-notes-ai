@@ -98,7 +98,7 @@ class NoteEnricher:
         prompt = ENRICH_USER_PROMPT.format(
         outline=outline.content, transcript=raw_note.content)
 
-        enriched_outline = str(await self.llm.complete(user_prompt= user_prompt, system_prompt= system_prompt))
+        enriched_outline = str(await self.llm.complete(user_prompt= prompt, system_prompt= system_prompt))
         msg = "Enriched outline with examples and metaphors (Step 2/2)." + \
             f"\n{enriched_outline[:1000]}..."
         logger.debug(msg)

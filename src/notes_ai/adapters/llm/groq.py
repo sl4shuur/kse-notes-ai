@@ -12,10 +12,10 @@ class GroqLLMClient:
     async def complete(
         self,
         *,
-        system: str,
-        user: str,
+        system_prompt: str,
+        user_prompt: str,
         temperature: float = 0.3,
-        max_tokens: int = 8192,
+        max_tokens: int = 3000,
     ) -> str:
 
         response = await self.client.chat.completions.create(
@@ -23,11 +23,11 @@ class GroqLLMClient:
             messages=[
                 {
                     "role": "system",
-                    "content": system,
+                    "content": system_prompt,
                 },
                 {
                     "role": "user",
-                    "content": user,
+                    "content": user_prompt,
                 },
             ],
             temperature=temperature,

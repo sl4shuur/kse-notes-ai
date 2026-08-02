@@ -255,9 +255,11 @@ async def create_note(
       outlined = await colorizer.apply_color_markup(outlined)
 
     if outlined:
-      cleaned_note = clean_note(outlined)  
+      outlined.content = clean_note(outlined.content)
+      cleaned_note = outlined
     else:
-      cleaned_note = clean_note(base_note)  
+      base_note.content = clean_note(base_note.content)
+      cleaned_note = base_note 
 
     await store.save(cleaned_note)
 
