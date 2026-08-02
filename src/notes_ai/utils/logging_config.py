@@ -2,12 +2,9 @@ import logging
 import sys
 from typing import Type, cast
 
-try:
-    from .logging_formatters import ColoredFormatter, FullColoredFormatter
-    from .loggers import CustomLogger
-except ImportError:
-    from logging_formatters import ColoredFormatter, FullColoredFormatter
-    from loggers import CustomLogger
+
+from notes_ai.utils.logging_formatters import ColoredFormatter, FullColoredFormatter
+from notes_ai.utils.loggers import CustomLogger
 
 
 def _create_handler(full_color: bool, include_function: bool) -> logging.Handler:

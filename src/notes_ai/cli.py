@@ -102,7 +102,7 @@ def main() -> None:
         sys.exit(1)
 
     extractors = [
-        YouTubeExtractor(),
+        YouTubeExtractor(logger= logger),
         WebExtractor(logger=logger),
         PDFExtractor(logger=logger),
         ImageExtractor(api_key=groq_key, logger=logger),
@@ -138,6 +138,7 @@ def main() -> None:
                     extractors=extractors,
                     llm=llm,
                     store=store,
+                    logger =logger
                 )
             )
             logger.success(f"Successfully generated note: {args.output_dir}/{note.title}.md")
