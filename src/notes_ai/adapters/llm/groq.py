@@ -15,7 +15,7 @@ class GroqLLMClient:
         system_prompt: str,
         user_prompt: str,
         temperature: float = 0.3,
-        max_tokens: int = 8192,
+        max_tokens: int = 3000,
     ) -> str:
 
         response = await self.client.chat.completions.create(
