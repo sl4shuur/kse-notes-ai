@@ -244,7 +244,7 @@ class YouTubeExtractor:
     
 
 
-    async def extract(self, source : Source, chunk_duration_ms: int, logger: CustomLogger, force_whisper: bool = False) -> ExtractedContent:
+    async def extract(self, source : Source, logger: CustomLogger, chunk_duration_ms: int = 100000, force_whisper: bool = True) -> ExtractedContent:
         """
         Generate a transcription for a YouTube video URL.
 
