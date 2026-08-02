@@ -334,6 +334,127 @@ The phase is complete when:
 - [ ] secrets, caches, generated notes, and local environment files are not tracked
 - [ ] README instructions match the actual repository
 
+### Phase one progress
+
+Phase one has been successfully completed. The legacy codebase was refactored into a structured Python package (`notes_ai`). Here is how each goal was accomplished:
+
+1. **Create the Python package**: The legacy application was restructured into a clean package under `src/notes_ai/`. We configured the CLI entry point in `pyproject.toml` (enabling `uv run notes-ai`), removed the legacy `main.py` orchestrator, and set up `cli.py` to handle environment and path resolutions.
+2. **Add shared models**: Built lightweight domain objects (`Source`, `ExtractedContent`, `Note`) using Python's `@dataclass` in `src/notes_ai/models.py`.
+3. **Define simple interfaces and custom exceptions**: Established strict `Protocol` contracts for `TextExtractor`, `LLMClient`, and `NoteStore` in `src/notes_ai/interfaces/`. Furthermore, we created `interfaces/exceptions.py` to define custom error classes (`UnsupportedSourceError`, `ExtractionError`, `LLMError`, `StorageError`), which accept an `extra_info` parameter for better error tracking.
+4. **Move external logic into adapters**: Third-party dependencies and integrations were isolated into `src/notes_ai/adapters/`. This encapsulates our extractors (YouTube, Web, PDF, Image, Audio), the `GroqLLMClient`, and the `MarkdownNoteStore`.
+5. **Implement an advanced synthesis pipeline**: The `src/notes_ai/pipeline.py` orchestrator was built to handle end-to-end processing. It features format detection (`process_content`) and extensive metadata extraction (`extract_metadata`) using libraries like `trafilatura` (web), `YoutubeDL` (video), `fitz` (PDF), `mutagen` (audio), and PIL (images). The core `create_note` function delegates to the appropriate extractor, generates content via `NoteGenerator`, optionally applies modular enhancements (`OutlineGenerator`, `NoteEnricher`, `ColorCategorizer`), and scrubs the output with `clean_note`.
+6. **Preserve the current generation flow**: The legacy prompt engineering logic (including semantic coloring rules, examples, and metaphors) was successfully preserved inside `adapters/llm_services/note_generator.py`.
+7. **Centralize configuration**: `config.py` was created to standardize paths (`DATA_DIR`, `TEST_DATA_DIR`, `TEMP_AUDIO_DIR`, etc.) and handle `.env` validation. Logging was also centralized using a `CustomLogger` setup.
+8. **Add focused tests**: *Not yet implemented.* (The `tests/` directory and offline integration tests specified in the requirements have not been added to the repository yet).
+9. **Update documentation**: The README was updated to reflect the new architecture, and the CLI documentation was appended.
+
+#### CLI User Guide & Documentation
+
+This guide provides full documentation on using the `notes-ai` Command-Line Interface (CLI).
+
+##### Quick Start & Global Help
+
+```bash
+uv run python -m notes_ai.cli --help
+```
+*or via the installed package entry point:*
+```bash
+uv run notes-ai --help
+```
+
+##### Global Help Output
+```text
+usage: cli.py [-h] [-o OUTPUT_DIR] [-n NAME] [-v] sources [sources ...]
+
+Notes AI — Generate structured study notes from YouTube, web, PDF, image, or audio sources.
+
+positional arguments:
+  sources               One or more URLs or local file paths to process.
+
+options:
+  -h, --help            show this help message and exit
+  -o, --output-dir OUTPUT_DIR
+                        Directory to save the generated markdown note(s) (default: output).
+  -n, --name NAME       Custom title/name for the note (only applicable when processing a single source).
+  -v, --verbose         Enable debug logging.
+```
+
+##### Command Reference
+
+###### Synopsis
+```bash
+uv run python -m notes_ai.cli <SOURCES...> [OPTIONS]
+```
+
+###### Positional Arguments
+| Argument | Type | Nargs | Description |
+| :--- | :--- | :---: | :--- |
+| `sources` | `str` | `+` (1 or more) | One or more YouTube URLs, Web URLs, or local file paths (`.pdf`, `.png`, `.mp3`, etc.) |
+
+###### Options & Flags
+| Option / Flag | Short | Type | Default | Description |
+| :--- | :---: | :--- | :--- | :--- |
+| `--output-dir` | `-o` | `str` | `output` | Directory where generated `.md` note files will be saved |
+| `--name` | `-n` | `str` | `None` | Custom note filename (without extension). Only valid for single-source runs |
+| `--verbose` | `-v` | flag | `False` | Enables `DEBUG` level log output in terminal |
+| `--help` | `-h` | flag | — | Displays the global help screen and exits |
+
+##### Supported Source Formats
+
+| Format | Category | File Extension / Pattern | Extractor Adapter |
+| :--- | :--- | :--- | :--- |
+| **YouTube** | Video URL | `youtube.com/watch?v=...`, `youtu.be/...` | `YouTubeExtractor` |
+| **Web Pages** | Article URL | `http://...`, `https://...` | `WebExtractor` |
+| **PDF** | Document | `.pdf` | `PDFExtractor` |
+| **Image (OCR)** | Image | `.jpg`, `.jpeg`, `.png`, `.bmp`, `.webp` | `ImageExtractor` |
+| **Audio** | Audio | `.mp3`, `.wav`, `.m4a`, `.opus`, `.flac`, `.aac` | `AudioExtractor` |
+
+##### Examples
+
+###### 1. Single Source Processing
+
+**YouTube Video:**
+```bash
+uv run python -m notes_ai.cli "https://www.youtube.com/watch?v=Z6z_feacXW8"
+```
+*Saves output to `./output/note_1.md`*
+
+**PDF Document with Custom Name & Output Directory:**
+```bash
+uv run python -m notes_ai.cli "/path/to/report.pdf" -o my_notes -n "Elections_Analysis"
+```
+*Saves output to `./my_notes/Elections_Analysis.md`*
+
+**Image File with Verbose Logging:**
+```bash
+uv run python -m notes_ai.cli "/path/to/diagram.png" -v
+```
+
+###### 2. Batch Processing (Multiple Sources)
+
+You can pass multiple files or URLs at once in a single command:
+
+```bash
+uv run python -m notes_ai.cli "https://youtu.be/Z6z_feacXW8" "report.pdf" "lecture.mp3" -o batch_output
+```
+
+*Processes each source sequentially and creates:*
+* `./batch_output/note_1.md`
+* `./batch_output/report.md`
+* `./batch_output/lecture.md`
+
+##### Environment Setup
+
+The CLI uses Groq LLMs to synthesize extracted content into study notes. Make sure your `GROQ_API_KEY` is defined in your `.env` file or environment variables:
+
+```bash
+# In your .env file
+GROQ_API_KEY="your_actual_groq_api_key"
+
+# Or exported directly in shell
+export GROQ_API_KEY="your_actual_groq_api_key"
+```
+
 ---
 
 ## Phase 2 — Multi-step synthesis and web application
@@ -601,3 +722,5 @@ Ruff should be added to the development dependencies before these checks become 
 ## License
 
 This project is intended for learning, experimentation, and demonstrations. Add an explicit license file before public reuse or distribution. Keep all credentials in environment variables and never commit real API keys.
+
+
