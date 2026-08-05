@@ -17,7 +17,7 @@ from notes_ai.adapters.extractors.audio import create_audio_chunks, transcribe_w
 from notes_ai.config import TEMP_AUDIO_DIR
 from notes_ai.utils.loggers import CustomLogger
 from notes_ai.interfaces.exceptions import ExtractionError
-
+from notes_ai.interfaces.extractor import TextExtractor
 
 def is_valid_youtube_url(url: str) -> bool:
         """
@@ -32,7 +32,7 @@ def is_valid_youtube_url(url: str) -> bool:
         YOUTUBE_URL_PATTERN = r"^(https?://)?(www\.)?(youtube\.com|youtu\.be)/.+$"
         return re.match(YOUTUBE_URL_PATTERN, url) is not None
 
-class YouTubeExtractor:
+class YouTubeExtractor(TextExtractor):
     def __init__(self, logger: CustomLogger):
               self.logger = logger
     def supports(self, source: Source) -> bool:

@@ -1,7 +1,7 @@
 from notes_ai.models import Source, ExtractedContent
 
 from pathlib import Path
-
+from notes_ai.interfaces.extractor import TextExtractor
 
 from notes_ai.utils.logging_config import CustomLogger
 
@@ -50,7 +50,7 @@ PROMPT = (
 
         
 
-class ImageExtractor:
+class ImageExtractor(TextExtractor):
 
 
 

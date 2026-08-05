@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Literal
 
 import fitz  # PyMuPDF library
-
+from notes_ai.interfaces.extractor import TextExtractor
 from notes_ai.models import ExtractedContent, Source
 from notes_ai.utils.logging_config import CustomLogger
 
@@ -117,7 +117,7 @@ def save_pdf_text(
 
 
 
-class PDFExtractor:
+class PDFExtractor(TextExtractor):
     """Extract text from PDF documents using PyMuPDF (fitz)."""
 
     def __init__(

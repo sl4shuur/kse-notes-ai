@@ -1,6 +1,6 @@
 from groq import AsyncGroq
-
-class GroqLLMClient:
+from notes_ai.interfaces.llm import LLMClient
+class GroqLLMClient(LLMClient):
     def __init__(
         self,
         api_key: str,

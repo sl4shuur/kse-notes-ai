@@ -3,7 +3,7 @@ import asyncio
 import trafilatura
 from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
 from concurrent.futures import ProcessPoolExecutor
-
+from notes_ai.interfaces.extractor import TextExtractor
 from notes_ai.models import Source, ExtractedContent
 
 
@@ -66,7 +66,7 @@ def _fetch_with_playwright_sync(url: str) -> str:
 
 
 
-class WebExtractor:
+class WebExtractor(TextExtractor):
 
 
 

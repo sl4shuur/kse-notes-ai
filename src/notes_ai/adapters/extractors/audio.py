@@ -7,7 +7,7 @@ from faster_whisper import WhisperModel
 from notes_ai.utils.logging_config import CustomLogger
 from notes_ai.models import Source, ExtractedContent
 
-
+from notes_ai.interfaces.extractor import TextExtractor
 def create_audio_chunks(audio_file: str | Path, chunk_duration_ms: int, temp_dir: str | Path, logger: CustomLogger) -> list[Path]:
     """
     Create chunks of audio from a given audio file.
@@ -126,7 +126,7 @@ def transcribe_with_faster_whisper(
     return result
 
 
-class AudioExtractor:
+class AudioExtractor(TextExtractor):
     """Extracts Audio using Whisper model."""
 
     def __init__(self, logger: CustomLogger):
