@@ -54,5 +54,5 @@ build-backend = "hatchling.build"
 packages = ["src/notes_ai"]
 
 [project.scripts]
-notes-ai = "notes_ai.cli:main"
+notes-ai = "notes_ai.main:main"
 
