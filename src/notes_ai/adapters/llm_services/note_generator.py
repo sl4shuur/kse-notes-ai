@@ -1,142 +1,111 @@
-from notes_ai.interfaces.llm import LLMClient
-from notes_ai.interfaces.llm import LLMClient
-from notes_ai.loggers import CustomLogger
-from notes_ai.models import ExtractedContent, Note
-from datetime import datetime
+"""Generate a complete, color-annotated study note in one LLM call."""
 
+from datetime import datetime, timezone
+from typing import Any
+
+from notes_ai.interfaces.llm import LLMClient
+from notes_ai.models import ExtractedContent, Note
+from notes_ai.loggers import CustomLogger
 
 
 SYSTEM_PROMPT = r"""<system>
 <role>
-You are an expert educational content assistant specializing in transforming raw transcripts into detailed, well-structured study notes with rich semantic markup.
+You are an expert educational note writer. Turn source material into one complete,
+accurate, self-contained Markdown study note.
 </role>
 
 <task>
-Transform a raw transcript into a comprehensive Markdown outline that organizes content into logical sections with detailed explanations and extensive semantic color markup.
+Perform the entire note-writing job in one pass: identify the structure, explain the
+important ideas, add useful learning aids, and apply semantic color markup to key
+words and short phrases.
 </task>
 
-<output_format>
-<structure>
-- Each major concept gets a `## Heading` (level 2 markdown)
-- Add a `## Conclusion` section at the end summarizing key takeaways
-</structure>
-
-<content_per_section>
-- 3-5 paragraphs of clear, detailed explanation
-- Each paragraph focused on a specific aspect of the concept
-- Separate paragraphs with blank lines
-- Use bullet points (`- item`) for lists where appropriate
-- Include Example blocks after complex concepts
-- Include Metaphor blocks after abstract concepts
-- Apply rich semantic color markup generously (8-15 terms per section)
-</content_per_section>
+<content_rules>
+- Preserve the meaning of the source and do not invent claims, quotations, or data.
+- Cover all important information while removing repetition and transcript filler.
+- Organize major topics under descriptive `##` headings and use `###` only when useful.
+- Use concise paragraphs and lists where they improve readability.
+- End with `## Conclusion` containing the main takeaways.
+- Match the language of the source material.
+</content_rules>
 
 <learning_aids>
-<example>
-<format>$\textcolor{Lime}{\textbf{Example}}$
-
-[Specific, concrete, real-world example with actual details and names]
-</format>
-<placement>After paragraphs explaining complex or abstract concepts</placement>
-</example>
-
-<metaphor>
-<format>$\textcolor{Thistle}{\textbf{Metaphor}}$
-
-[Simple, intuitive analogy that makes the concept relatable]
-</format>
-<placement>After difficult-to-understand concepts</placement>
-</metaphor>
+- Add a concrete Example only when it materially improves understanding.
+- Add a simple Metaphor only for a genuinely difficult or abstract idea.
+- Use at most one or two learning aids per section.
+- Format their labels exactly as:
+  `$\textcolor{Lime}{\textbf{Example}}$`
+  `$\textcolor{Thistle}{\textbf{Metaphor}}$`
 </learning_aids>
-</output_format>
 
-<semantic_color_markup>
-<instruction>Apply colors generously to important terms. Use all five color categories to create a colorful, semantically rich document.</instruction>
+<semantic_colors>
+Color important words or short phrases with the category that matches their meaning:
+- Lime: core concepts, definitions, and theoretical frameworks
+- Red: errors, failures, pitfalls, and critical warnings
+- Orange: risks, limitations, caveats, and trade-offs
+- Cyan: numbers, measurements, datasets, and concrete facts
+- Lavender: actions, methods, procedures, and workflows
+- Periwinkle: structures, relationships, and system components
+- SeaGreen: especially important takeaways or notable terms
 
-<colors>
-<lime>
-<usage>Main concepts, theoretical frameworks, definitions, key ideas</usage>
-<format>$\textcolor{Lime}{\text{term}}$</format>
-</lime>
+Use this exact syntax: `$\textcolor{ColorName}{\text{term}}$`.
+Apply colors selectively and consistently. Do not color headings, full sentences,
+ordinary connective words, or the same term repeatedly in a short passage.
+</semantic_colors>
 
-<red>
-<usage>Pitfalls, common mistakes, errors to avoid, critical issues</usage>
-<format>$\textcolor{Red}{\text{term}}$</format>
-</red>
-
-<orange>
-<usage>Tradeoffs, risks, limitations, important caveats</usage>
-<format>$\textcolor{Orange}{\text{term}}$</format>
-</orange>
-
-<cyan>
-<usage>Datasets, metrics, specific values, concrete numbers, examples</usage>
-<format>$\textcolor{Cyan}{\text{term}}$</format>
-</cyan>
-
-<lavender>
-<usage>Methods, processes, procedures, workflows, logical steps</usage>
-<format>$\textcolor{Lavender}{\text{term}}$</format>
-</lavender>
-</colors>
-
-<color_distribution>
-- Lime: ~40% (most frequent) - for concepts and frameworks
-- Red: ~15% - for warnings and errors
-- Orange: ~15% - for cautions and risks
-- Cyan: ~15% - for data and examples
-- Lavender: ~15% - for methods and procedures
-</color_distribution>
-</semantic_color_markup>
-
-<technical_rules>
-<rule>Use ONLY `$...$` or `$$...$$` for math (never `\(...\)` or `\[...\]`)</rule>
-<rule>NO SPACES inside math: ✅ `$a+b=c$` ❌ `$ a+b=c $`</rule>
-<rule>NO ESCAPING: ✅ `$x$` ❌ `\$x\$`</rule>
-<rule>OUTPUT RAW: No code fence wrapping</rule>
-<rule>BE SPECIFIC: Write real examples with names, numbers, and details</rule>
-<rule>PRESERVE STRUCTURE: Don't change any existing markup or structure</rule>
-<rule>QUALITY OVER QUANTITY: 1-2 learning aids per section max</rule>
-</technical_rules>
-
-<language>
-Default: English (unless source text is in another language - match the input language)
-</language>
+<format_rules>
+- Return raw Markdown only, without a code fence or preamble.
+- Use `$...$` or `$$...$$` for mathematics; never escape the dollar signs.
+- Do not put spaces immediately inside math delimiters.
+- Keep LaTeX commands and braces balanced.
+- Do not add a level-one title; the caller owns the note title.
+</format_rules>
 </system>"""
 
+
 USER_PROMPT_TEMPLATE = """<user>
-<instruction>Transform this transcript into detailed study notes with rich semantic markup, examples, and metaphors.</instruction>
+Create the complete study note from the following source material.
 
-<transcript>
+<source_material>
 {content}
-</transcript>
+</source_material>
+</user>"""
 
-<requirements>
-- Create well-structured outline with `## Heading` sections
-- Add Examples (specific, real-world, with actual details)
-- Add Metaphors (intuitive, relatable analogies)
-- Apply rich semantic color markup (8-15 terms per section)
-- Use all 5 colors: Lime, Red, Orange, Cyan, Lavender
-- Include a ## Conclusion section
-- Output raw Markdown (no code fences)
-</requirements>
-</user>
-"""
 
 class NoteGenerator:
+    """Single agent responsible for the complete generated note."""
+
     def __init__(self, llm: LLMClient):
         self.llm = llm
-    async def generate(self,source_content: ExtractedContent, logger: CustomLogger, user_prompt = USER_PROMPT_TEMPLATE, system_prompt = SYSTEM_PROMPT) -> Note:
-        prompt = user_prompt.format(content=source_content.text)
 
-        notes =str( await self.llm.complete(user_prompt = prompt, system_prompt = system_prompt ))
-        logger.debug("Generated study notes.")
+    async def generate(
+        self,
+        source_content: ExtractedContent,
+        logger: CustomLogger,
+        *,
+        title: str = "Study Notes",
+        metadata: dict[str, Any] | None = None,
+        user_prompt: str = USER_PROMPT_TEMPLATE,
+        system_prompt: str = SYSTEM_PROMPT,
+    ) -> Note:
+        prompt = user_prompt.format(content=source_content.text)
+        generated_markdown = str(
+            await self.llm.complete(
+                user_prompt=prompt,
+                system_prompt=system_prompt,
+            )
+        ).strip()
+
+        logger.debug("Generated complete study note in one LLM pass.")
         return Note(
-        title=getattr(source_content, "title", "Study Notes"),
-        content=notes,
-        date_created=datetime.now(),
-        metadata={
-            "model": self.llm.model,
-            "temperature": 0.3,
-        },
-    )
+            title=title,
+            content=generated_markdown,
+            date_created=datetime.now(timezone.utc).isoformat(),
+            metadata={
+                **(metadata or {}),
+                **source_content.metadata,
+                "generated": True,
+                "colored": True,
+                "model": getattr(self.llm, "model", "unknown"),
+            },
+        )

@@ -5,7 +5,6 @@ import asyncio
 import logging
 import sys
 from pathlib import Path
-from typing import cast
 
 from notes_ai.config import get_config
 
@@ -59,7 +58,7 @@ def main() -> None:
     
     args = parser.parse_args()
     config = get_config()
-    logger = cast(CustomLogger, logging.getLogger(config.app_name))
+    logger = CustomLogger(config.app_name)
     if args.verbose:
         logger.setLevel(logging.DEBUG)
 
