@@ -4,7 +4,7 @@ from typing import Literal
 
 import fitz  # PyMuPDF library
 from notes_ai.interfaces.extractor import TextExtractor
-from notes_ai.models import ExtractedContent, Source
+from notes_ai.models import ExtractedContent, PdfExtractionMetadata, Source
 from notes_ai.loggers import CustomLogger
 
 
@@ -132,7 +132,7 @@ class PDFExtractor(TextExtractor):
             or source.location.lower().endswith(".pdf")
         )
 
-    async def extract(self, source: Source, **kwargs) -> ExtractedContent:
+    async def extract(self, source: Source) -> ExtractedContent:
         pdf_path = Path(source.location)
 
         if not pdf_path.exists():
@@ -143,8 +143,8 @@ class PDFExtractor(TextExtractor):
 
         return ExtractedContent(
             text=text,
-            metadata={
-                "source_file": pdf_path.name,
-                "page_count": len(pages),
-            },
+            metadata=PdfExtractionMetadata(
+                source_file=pdf_path.name,
+                page_count=len(pages),
+            ),
         )

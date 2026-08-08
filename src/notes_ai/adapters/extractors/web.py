@@ -4,7 +4,7 @@ import trafilatura
 from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
 from concurrent.futures import ProcessPoolExecutor
 from notes_ai.interfaces.extractor import TextExtractor
-from notes_ai.models import Source, ExtractedContent
+from notes_ai.models import ExtractedContent, Source, WebExtractionMetadata
 
 
 
@@ -80,7 +80,7 @@ class WebExtractor(TextExtractor):
 
 
 
-    async def extract(self, source: Source, include_metadata: bool = True, **kwargs) -> ExtractedContent:
+    async def extract(self, source: Source) -> ExtractedContent:
         """
         Extract article text from a web page using trafilatura with Playwright fallback.
 
@@ -113,35 +113,27 @@ class WebExtractor(TextExtractor):
                         url
                     )
 
-            # Extract with or without metadata
-            if include_metadata:
-                metadata = trafilatura.extract(
-                    downloaded,
-                    output_format="json",
-                    with_metadata=True
-                )
-
-                
-                text = trafilatura.extract(
-                    downloaded,
-                    include_comments=False,
-                    include_tables=True,
-                    output_format="markdown"
-                )           
-            else:
-                text = trafilatura.extract(
-                    downloaded,
-                    include_comments=False,
-                    include_tables=True,
-                    output_format="markdown"
-                )
-                metadata = {}
+            text = trafilatura.extract(
+                downloaded,
+                include_comments=False,
+                include_tables=True,
+                output_format="markdown"
+            )
+            extracted_metadata = trafilatura.extract_metadata(downloaded)
 
             if not text:
                 raise ValueError(f"No content extracted from: {url}")
 
             logger.debug(f"Extracted article: {len(text)} chars")
-            return ExtractedContent(text=text, metadata= metadata)
+            return ExtractedContent(
+                text=text,
+                metadata=WebExtractionMetadata(
+                    title=getattr(extracted_metadata, "title", None),
+                    author=getattr(extracted_metadata, "author", None),
+                    published_date=getattr(extracted_metadata, "date", None),
+                    url=getattr(extracted_metadata, "url", None) or url,
+                ),
+            )
         except PlaywrightTimeoutError:
             logger.error(f"Playwright timeout while fetching: {url}")
             raise

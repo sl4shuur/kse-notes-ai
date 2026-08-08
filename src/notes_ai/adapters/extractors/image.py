@@ -1,4 +1,4 @@
-from notes_ai.models import Source, ExtractedContent
+from notes_ai.models import ExtractedContent, ImageExtractionMetadata, Source
 
 from pathlib import Path
 from notes_ai.interfaces.extractor import TextExtractor
@@ -140,7 +140,10 @@ class ImageExtractor(TextExtractor):
         )
 
         logger.debug(f"OCR result for image {image_name}: {ocr_text[:50]}")
-        return ExtractedContent(ocr_text, metadata={})
+        return ExtractedContent(
+            text=ocr_text,
+            metadata=ImageExtractionMetadata(image_count=1),
+        )
 
 
     async def batch_img2text(
@@ -174,11 +177,20 @@ class ImageExtractor(TextExtractor):
         )
 
         logger.debug(f"Batch OCR result: {ocr_text[:100]}")
-        return ExtractedContent(ocr_text, metadata={})
-      
-    async def extract(self, source: Source | list[Source], **kwargs):
-         if isinstance(source, list):
-              return await self.batch_img2text(sources=source,logger = self.logger)
-         else: 
-              return await self.single_img2text(source=source,logger = self.logger)     
-             
+        return ExtractedContent(
+            text=ocr_text,
+            metadata=ImageExtractionMetadata(image_count=len(sources)),
+        )
+    async def extract(
+        self,
+        source: Source | list[Source],
+    ) -> ExtractedContent:
+        if isinstance(source, list):
+            return await self.batch_img2text(
+                sources=source,
+                logger=self.logger,
+            )
+        return await self.single_img2text(
+            source=source,
+            logger=self.logger,
+        )

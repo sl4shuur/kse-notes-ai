@@ -1,11 +1,9 @@
 """Generate a complete, color-annotated study note in one LLM call."""
 
-from datetime import datetime, timezone
-from typing import Any
-
+from notes_ai.adapters.llm_services.final_cleaner import clean_note
 from notes_ai.interfaces.llm import LLMClient
-from notes_ai.models import ExtractedContent, Note
 from notes_ai.loggers import CustomLogger
+from notes_ai.models import ExtractedContent, Note, NoteMetadata, Source
 
 
 SYSTEM_PROMPT = r"""<system>
@@ -75,37 +73,34 @@ Create the complete study note from the following source material.
 class NoteGenerator:
     """Single agent responsible for the complete generated note."""
 
-    def __init__(self, llm: LLMClient):
+    def __init__(self, llm: LLMClient, logger: CustomLogger):
         self.llm = llm
+        self.logger = logger
 
     async def generate(
         self,
-        source_content: ExtractedContent,
-        logger: CustomLogger,
+        source: Source,
+        content: ExtractedContent,
         *,
-        title: str = "Study Notes",
-        metadata: dict[str, Any] | None = None,
         user_prompt: str = USER_PROMPT_TEMPLATE,
         system_prompt: str = SYSTEM_PROMPT,
     ) -> Note:
-        prompt = user_prompt.format(content=source_content.text)
+        prompt = user_prompt.format(content=content.text)
         generated_markdown = str(
             await self.llm.complete(
                 user_prompt=prompt,
                 system_prompt=system_prompt,
             )
         ).strip()
+        cleaned_markdown = clean_note(generated_markdown)
 
-        logger.debug("Generated complete study note in one LLM pass.")
+        self.logger.debug("Generated complete study note in one LLM pass.")
         return Note(
-            title=title,
-            content=generated_markdown,
-            date_created=datetime.now(timezone.utc).isoformat(),
-            metadata={
-                **(metadata or {}),
-                **source_content.metadata,
-                "generated": True,
-                "colored": True,
-                "model": getattr(self.llm, "model", "unknown"),
-            },
+            title=source.title,
+            content=cleaned_markdown,
+            source=source,
+            metadata=NoteMetadata(
+                extraction=content.metadata,
+                model=getattr(self.llm, "model", "unknown"),
+            ),
         )

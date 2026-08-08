@@ -5,7 +5,7 @@ from pydub import AudioSegment
 from faster_whisper import WhisperModel
 
 from notes_ai.loggers import CustomLogger
-from notes_ai.models import Source, ExtractedContent
+from notes_ai.models import AudioExtractionMetadata, ExtractedContent, Source
 
 from notes_ai.interfaces.extractor import TextExtractor
 def create_audio_chunks(audio_file: str | Path, chunk_duration_ms: int, temp_dir: str | Path, logger: CustomLogger) -> list[Path]:
@@ -137,7 +137,7 @@ class AudioExtractor(TextExtractor):
     def supports(self, source: Source) -> bool:
         return source.input_type.lower() == "audio"
 
-    async def extract(self, source: Source,**kwargs) -> ExtractedContent:
+    async def extract(self, source: Source) -> ExtractedContent:
         path = Path(source.location)
 
         if not path.exists():
@@ -162,9 +162,9 @@ class AudioExtractor(TextExtractor):
 
         return ExtractedContent(
             text=text,
-            metadata={
-                "source_file": path.name,
-                "chunk_count": len(chunks),
-            },
+            metadata=AudioExtractionMetadata(
+                source_file=path.name,
+                chunk_count=len(chunks),
+            ),
         )
 
