@@ -1,4 +1,4 @@
-from notes_ai.utils.loggers import CustomLogger
+from notes_ai.loggers.loggers import CustomLogger
 import asyncio
 import trafilatura
 from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError

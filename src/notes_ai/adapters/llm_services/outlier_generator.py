@@ -1,7 +1,7 @@
 
 from notes_ai.interfaces.llm import LLMClient
 from notes_ai.interfaces.llm import LLMClient
-from notes_ai.utils.logging_config import CustomLogger
+from notes_ai.loggers.logging_config import CustomLogger
 from notes_ai.models import  Note
 from dataclasses import replace  
 

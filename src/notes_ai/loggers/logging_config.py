@@ -3,8 +3,8 @@ import sys
 from typing import Type, cast
 
 
-from notes_ai.utils.logging_formatters import ColoredFormatter, FullColoredFormatter
-from notes_ai.utils.loggers import CustomLogger
+from notes_ai.loggers.logging_formatters import ColoredFormatter, FullColoredFormatter
+from notes_ai.loggers.loggers import CustomLogger
 
 
 def _create_handler(full_color: bool, include_function: bool) -> logging.Handler:
@@ -78,7 +78,7 @@ def setup_logging(
     config_msg = "Logging configured"
     if include_function:
         config_msg += " with function names"
-    config_msg += f" successfully ✅"
+    config_msg += " successfully"
 
     if isinstance(logger, CustomLogger):
         logger = cast(CustomLogger, logger)  # Type hinting

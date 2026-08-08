@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Literal
 import yt_dlp
 from yt_dlp.utils import DownloadError
-from notes_ai.utils.logging_config import CustomLogger
+from notes_ai.loggers.logging_config import CustomLogger
 from notes_ai.interfaces.exceptions import ExtractionError
 DownloadType = Literal["audio", "video"]
 AudioFormat = Literal["mp3", "m4a", "wav", "opus"]

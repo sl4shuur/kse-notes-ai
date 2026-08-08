@@ -60,8 +60,8 @@ def _prepare_runtime(config: Config) -> None:
 
 @lru_cache
 def get_config() -> Config:
-    from notes_ai.utils.logging_config import setup_logging
-    from notes_ai.utils.loggers import CustomLogger
+    from notes_ai.loggers.logging_config import setup_logging
+    from notes_ai.loggers.loggers import CustomLogger
 
     config = Config()
     _prepare_runtime(config)

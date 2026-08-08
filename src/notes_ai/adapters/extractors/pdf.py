@@ -5,7 +5,7 @@ from typing import Literal
 import fitz  # PyMuPDF library
 from notes_ai.interfaces.extractor import TextExtractor
 from notes_ai.models import ExtractedContent, Source
-from notes_ai.utils.logging_config import CustomLogger
+from notes_ai.loggers.logging_config import CustomLogger
 
 
 def _extract_text_from_page(page: fitz.Page) -> str:
