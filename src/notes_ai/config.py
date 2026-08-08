@@ -1,41 +1,79 @@
-import os
-import dotenv
-from notes_ai.utils.config_helper import find_project_root
+"""Application settings and runtime preparation helpers."""
+
+import logging
+from functools import lru_cache
+from pathlib import Path
+from pprint import pprint
+from typing import Literal
+
+from pydantic import AliasChoices, Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
-
-# Base of the project
-BASE_DIR = find_project_root()
-DATA_DIR = BASE_DIR / "data"
-
-# Direcitories for testing and outputs
-TEST_DATA_DIR = BASE_DIR / "test_data"
-TEST_OUTPUT_DIR = BASE_DIR / "test_output"
-CONTENT_DIR = BASE_DIR / "content"
-
-# Temporary directory for audio chunks
-TEMP_AUDIO_DIR = BASE_DIR / "temp_audio_chunks"
-
-# .env file loading
-dotenv_path = BASE_DIR / ".env"
-if not dotenv_path.exists():
-    print(f".env file not found at {dotenv_path}")
-    raise FileNotFoundError(f"Environment file not found: {dotenv_path}")
-
-dotenv.load_dotenv(dotenv_path)
-
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-if not GROQ_API_KEY:
-    print("GROQ_API_KEY not found in environment variables.")
-    raise ValueError(
-        "GROQ_API_KEY not found in environment variables. Please set it in the .env file."
+class Config(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=PROJECT_ROOT / ".env",
+        env_prefix="APP_",
+        env_file_encoding="utf-8",
+        extra="ignore",
     )
 
-for directory in [DATA_DIR, TEST_DATA_DIR, TEST_OUTPUT_DIR, CONTENT_DIR, TEMP_AUDIO_DIR]:
-    if directory.exists() and directory.is_file():
-        directory.unlink()  # Remove the file if a file exists with the same name
-    directory.mkdir(parents=True, exist_ok=True)
+    app_name: str = "notes-ai"
+
+    root_dir: Path = PROJECT_ROOT
+    data_dir: Path = PROJECT_ROOT / "data"
+    log_dir: Path = PROJECT_ROOT / "logs"
+    output_dir: Path = PROJECT_ROOT / "output"
+    content_dir: Path = PROJECT_ROOT / "content"
+    temp_audio_dir: Path = PROJECT_ROOT / "temp_audio_chunks"
+    test_data_dir: Path = PROJECT_ROOT / "test_data"
+    test_output_dir: Path = PROJECT_ROOT / "test_output"
+    directories: tuple[Path, ...] = (
+        data_dir,
+        log_dir,
+        output_dir,
+        content_dir,
+        temp_audio_dir,
+        test_data_dir,
+        test_output_dir,
+    )
+
+    log_level: str = "INFO"
+    log_formatter: Literal["ColoredFormatter", "FullColoredFormatter"] = "ColoredFormatter"
+    log_date_format: str = "%d-%m-%Y %H:%M:%S"
+    log_full_color: bool = True
+    log_include_function: bool = True
+    success_level: int = 69
+
+    groq_api_key: str = Field(
+        default="",
+        validation_alias=AliasChoices("GROQ_API_KEY", "APP_GROQ_API_KEY"),
+    )
+
+
+def _prepare_runtime(config: Config) -> None:
+    for directory in config.directories:
+        directory.mkdir(parents=True, exist_ok=True)
+
+
+@lru_cache
+def get_config() -> Config:
+    from notes_ai.utils.logging_config import setup_logging
+    from notes_ai.utils.loggers import CustomLogger
+
+    config = Config()
+    _prepare_runtime(config)
+    setup_logging(
+        level=getattr(logging, config.log_level.upper(), logging.INFO),
+        full_color=config.log_full_color,
+        include_function=config.log_include_function,
+        logger_class=CustomLogger,
+        logger_name=config.app_name,
+    )
+    return config
 
 
 if __name__ == "__main__":
-    print(f"Base directory: {BASE_DIR}")
+    pprint(get_config().model_dump(exclude={"groq_api_key"}))

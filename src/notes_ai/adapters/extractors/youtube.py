@@ -4,6 +4,7 @@ from notes_ai.models import Source, ExtractedContent
 
 import re
 import html
+from pathlib import Path
 
 import yt_dlp
 import webvtt
@@ -14,7 +15,7 @@ from time import sleep
 from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled, NoTranscriptFound
 from notes_ai.adapters.extractors.downloader import yt_dlp_download
 from notes_ai.adapters.extractors.audio import create_audio_chunks, transcribe_with_faster_whisper
-from notes_ai.config import TEMP_AUDIO_DIR
+from notes_ai.config import get_config
 from notes_ai.utils.loggers import CustomLogger
 from notes_ai.interfaces.exceptions import ExtractionError
 from notes_ai.interfaces.extractor import TextExtractor
@@ -33,8 +34,13 @@ def is_valid_youtube_url(url: str) -> bool:
         return re.match(YOUTUBE_URL_PATTERN, url) is not None
 
 class YouTubeExtractor(TextExtractor):
-    def __init__(self, logger: CustomLogger):
-              self.logger = logger
+    def __init__(
+        self,
+        logger: CustomLogger,
+        temp_audio_dir: str | Path | None = None,
+    ):
+        self.logger = logger
+        self.temp_audio_dir = Path(temp_audio_dir or get_config().temp_audio_dir)
     def supports(self, source: Source) -> bool:
         return source.input_type == "youtube"
 
@@ -266,11 +272,11 @@ class YouTubeExtractor(TextExtractor):
                 return result
         # If transcript extraction fails, download the audio
         audio_file = yt_dlp_download(
-            yt_url, logger=logger, output_dir=TEMP_AUDIO_DIR)
+            yt_url, logger=logger, output_dir=self.temp_audio_dir)
         logger.debug(f"Downloaded audio file: {audio_file}")
 
         chunks = create_audio_chunks(
-            audio_file, chunk_duration_ms, temp_dir=TEMP_AUDIO_DIR, logger=logger)
+            audio_file, chunk_duration_ms, temp_dir=self.temp_audio_dir, logger=logger)
         logger.debug(f"Created {len(chunks)} audio chunks.")
 
         transcription = transcribe_with_faster_whisper(chunks, logger)
