@@ -233,22 +233,13 @@ Use one small orchestration function in `notes_ai/pipeline.py` instead of introd
 ```python
 async def create_note(
     source: Source,
-    extractors: list[TextExtractor],
-    llm: LLMClient,
+    extractors: Sequence[TextExtractor],
+    generator: NoteGenerationService,
     store: NoteStore,
 ) -> Note:
-    extractor = next(
-        (item for item in extractors if item.supports(source)),
-        None,
-    )
-
-    if extractor is None:
-        raise UnsupportedSourceError(source.location)
-
-    content = await extractor.extract(source)
-    note = await generate_note(content, llm)
+    content = await extract_content(source, extractors)
+    note = await generator.generate(source, content)
     await store.save(note)
-
     return note
 ```
 
@@ -339,11 +330,11 @@ The phase is complete when:
 Legacy codebase was refactored into a structured Python package (`notes_ai`). Here is what we did:
 
 1. **Create the Python package**: The application was restructured according to plan into a package under `src/notes_ai/`. We made the CLI entry point in `pyproject.toml` (enabling `uv run notes-ai`) and main logic is in pipeline with cli in main.py
-2. **Add shared models**: Built domain objects as requested (`Source`, `ExtractedContent`, `Note`) using Python's `@dataclass` in `src/notes_ai/models.py`.
-3. **Define simple interfaces and custom exceptions**: Established `Protocol` contracts for `TextExtractor`, `LLMClient`, and `NoteStore` in `src/notes_ai/interfaces/`, and `interfaces/exceptions.py` to define custom errors (`UnsupportedSourceError`, `ExtractionError`, `LLMError`, `StorageError`), which accept an `extra_info` parameter for better error tracking.
+2. **Add shared models**: Built immutable Pydantic domain objects (`Source`, `ExtractedContent`, and `Note`) with discriminated, source-specific metadata models in `src/notes_ai/models.py`.
+3. **Define simple interfaces and custom exceptions**: Established `Protocol` contracts for extractors, note generation, LLM access, and storage in `src/notes_ai/interfaces/`, and `interfaces/exceptions.py` defines application errors (`UnsupportedSourceError`, `ExtractionError`, `LLMError`, `StorageError`).
 4. **Move external logic into adapters**: Content extractions was moved to `src/notes_ai/adapters/`. This encapsulates our extractors (YouTube, Web, PDF, Image, Audio), the `GroqLLMClient`, and the `MarkdownNoteStore`, they now act as classes rather then bunch of functions.
-5. **Implement an advanced synthesis pipeline**: The `src/notes_ai/pipeline.py` orchestrator was built to handle end-to-end processing. It features format detection (`process_content`) and extensive metadata extraction (`extract_metadata`) using libraries like `trafilatura` (web), `YoutubeDL` (video), `fitz` (PDF), `mutagen` (audio), and PIL (images). The core `create_note` function delegates to the appropriate extractor, generates content via `NoteGenerator`, optionally applies modular enhancements (`OutlineGenerator`, `NoteEnricher`, `ColorCategorizer`), and scrubs the output with `clean_note`.
-6. **Centralize configuration**: `config.py` was created to standardize paths (`DATA_DIR`, `TEST_DATA_DIR`, `TEMP_AUDIO_DIR`, etc.) and handle `.env` validation. Logging was also centralized using a `CustomLogger`.
+5. **Implement a focused synthesis pipeline**: `src/notes_ai/pipeline.py` now contains only high-level orchestration: extract, generate, and save. Source detection, typed provider metadata, source construction, and extractor selection live in `src/notes_ai/ingestion/`; note formatting and cleanup stay behind the generation service.
+6. **Centralize configuration**: `src/notes_ai/config.py` provides validated application settings, runtime paths, `.env` loading, and logging configuration.
 7. **Update documentation**: CLI documentation was appended just below.
 
 #### CLI User Guide & Documentation
