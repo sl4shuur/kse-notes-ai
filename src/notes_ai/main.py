@@ -2,46 +2,12 @@
 
 import argparse
 import asyncio
-import os
+import logging
 import sys
 from pathlib import Path
-import logging
-from notes_ai.utils.logging_config import setup_logging
-import asyncio
-import dotenv
+from typing import cast
 
-# Load .env from workspace root if present
-dotenv.load_dotenv(Path.cwd() / ".env")
-
-if not os.getenv("GROQ_API_KEY"):
-    os.environ["GROQ_API_KEY"] = "placeholder_key_for_import"
-    _ENV_KEY_WAS_MISSING = True
-else:
-    _ENV_KEY_WAS_MISSING = False
-
-import notes_ai.utils.config_helper as _config_helper
-
-_orig_find_root = _config_helper.find_project_root
-
-
-def _patched_find_project_root(start_path=None, **kwargs):
-    if start_path is None:
-        start_path = Path.cwd()
-    return _orig_find_root(start_path=start_path, **kwargs)
-
-
-_config_helper.find_project_root = _patched_find_project_root
-
-_orig_exists = Path.exists
-
-
-def _patched_exists(self):
-    if self.name == ".env" and not _orig_exists(self):
-        return True
-    return _orig_exists(self)
-
-
-Path.exists = _patched_exists
+from notes_ai.config import get_config
 
 import notes_ai.adapters.extractors.youtube as _yt_module
 
@@ -57,9 +23,7 @@ from notes_ai.adapters.llm.groq import GroqLLMClient
 from notes_ai.adapters.storage.markdown import MarkdownNoteStore
 from notes_ai.models import Source
 from notes_ai.pipeline import create_note, process_content
-from notes_ai.utils.loggers import CustomLogger
-
-Path.exists = _orig_exists
+from notes_ai.loggers import CustomLogger
 
 
 def main() -> None:
@@ -94,19 +58,19 @@ def main() -> None:
     )
     
     args = parser.parse_args()
-    logger = setup_logging(
-    level=logging.DEBUG,
-    logger_class=CustomLogger,
-    logger_name="notes_ai",
-    )
-    groq_key = os.getenv("GROQ_API_KEY", "")
-    if not groq_key or groq_key == "placeholder_key_for_import":
+    config = get_config()
+    logger = cast(CustomLogger, logging.getLogger(config.app_name))
+    if args.verbose:
+        logger.setLevel(logging.DEBUG)
+
+    groq_key = config.groq_api_key
+    if not groq_key:
         logger.error("GROQ_API_KEY environment variable is not set. Please set it in your environment or .env file.")
         sys.exit(1)
     llm = GroqLLMClient(api_key=groq_key)
     store = MarkdownNoteStore(output_dir=args.output_dir)
     extractors = [
-        YouTubeExtractor(logger= logger),
+        YouTubeExtractor(logger=logger, temp_audio_dir=config.temp_audio_dir),
         WebExtractor(logger=logger),
         PDFExtractor(logger=logger),
         ImageExtractor(llm=llm, logger=logger),

@@ -1,6 +1,6 @@
 import re
 import json
-from notes_ai.loggers.logging_config import CustomLogger
+from notes_ai.loggers import CustomLogger
 from notes_ai.models import Note
 from dataclasses import replace
 from notes_ai.interfaces.llm import LLMClient

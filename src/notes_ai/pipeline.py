@@ -5,7 +5,7 @@ from notes_ai.interfaces.llm import LLMClient
 from notes_ai.models import Source, Note
 from notes_ai.interfaces.exceptions import UnsupportedSourceError
 from notes_ai.adapters.extractors.youtube import is_valid_youtube_url
-from notes_ai.loggers.loggers import CustomLogger
+from notes_ai.loggers import CustomLogger
 from notes_ai.adapters.llm_services.final_cleaner import clean_note
 from pathlib import Path
 from typing import Any

@@ -3,14 +3,12 @@ from notes_ai.models import Source, ExtractedContent
 from pathlib import Path
 from notes_ai.interfaces.extractor import TextExtractor
 
-from notes_ai.loggers.logging_config import CustomLogger
+from notes_ai.loggers import CustomLogger
 
 
 import base64
 from pathlib import Path
 from groq import Groq
-
-from notes_ai.loggers.logging_config import CustomLogger
 
 # https://console.groq.com/docs/models
 # meta-llama/llama-guard-4-12b

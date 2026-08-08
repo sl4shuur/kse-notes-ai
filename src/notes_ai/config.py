@@ -57,21 +57,17 @@ def _prepare_runtime(config: Config) -> None:
     for directory in config.directories:
         directory.mkdir(parents=True, exist_ok=True)
 
+@lru_cache
+def _setup_config() -> Config:
+    return Config()
 
 @lru_cache
 def get_config() -> Config:
-    from notes_ai.loggers.logging_config import setup_logging
-    from notes_ai.loggers.loggers import CustomLogger
+    from notes_ai.loggers import apply_logging_config
 
-    config = Config()
+    config = _setup_config()
     _prepare_runtime(config)
-    setup_logging(
-        level=getattr(logging, config.log_level.upper(), logging.INFO),
-        full_color=config.log_full_color,
-        include_function=config.log_include_function,
-        logger_class=CustomLogger,
-        logger_name=config.app_name,
-    )
+    apply_logging_config(config)
     return config
 
 
