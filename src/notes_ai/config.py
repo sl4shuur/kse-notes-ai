@@ -22,21 +22,13 @@ class Config(BaseSettings):
     app_name: str = "notes-ai"
 
     root_dir: Path = PROJECT_ROOT
-    data_dir: Path = PROJECT_ROOT / "data"
     log_dir: Path = PROJECT_ROOT / "logs"
     output_dir: Path = PROJECT_ROOT / "output"
-    content_dir: Path = PROJECT_ROOT / "content"
     temp_audio_dir: Path = PROJECT_ROOT / "temp_audio_chunks"
-    test_data_dir: Path = PROJECT_ROOT / "test_data"
-    test_output_dir: Path = PROJECT_ROOT / "test_output"
     directories: tuple[Path, ...] = (
-        data_dir,
         log_dir,
         output_dir,
-        content_dir,
         temp_audio_dir,
-        test_data_dir,
-        test_output_dir,
     )
 
     log_level: str = "INFO"

@@ -130,7 +130,7 @@ class PDFExtractor(TextExtractor):
         return (
             source.input_type.lower() in ("pdf", "document")
             or source.location.lower().endswith(".pdf")
-        )
+        )  # fmt: skip
 
     async def extract(self, source: Source) -> ExtractedContent:
         pdf_path = Path(source.location)
