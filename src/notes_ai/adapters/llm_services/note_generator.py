@@ -1,9 +1,10 @@
 """Generate a complete, color-annotated study note in one LLM call."""
 
-from notes_ai.adapters.llm_services.final_cleaner import clean_note
-from notes_ai.interfaces.llm import LLMClient
+from notes_ai.interfaces import LLMClient
 from notes_ai.loggers import CustomLogger
 from notes_ai.models import ExtractedContent, Note, NoteMetadata, Source
+
+from .final_cleaner import clean_note
 
 SYSTEM_PROMPT = r"""<system>
 <role>

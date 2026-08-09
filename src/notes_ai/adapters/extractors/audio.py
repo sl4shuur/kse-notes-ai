@@ -4,7 +4,7 @@ from pathlib import Path
 from faster_whisper import WhisperModel
 from pydub import AudioSegment
 
-from notes_ai.interfaces.extractor import TextExtractor
+from notes_ai.interfaces import TextExtractor
 from notes_ai.loggers import CustomLogger
 from notes_ai.models import AudioExtractionMetadata, ExtractedContent, Source
 

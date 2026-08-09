@@ -5,14 +5,16 @@ import logging
 from collections.abc import Sequence
 from pathlib import Path
 
-from notes_ai.adapters.extractors.audio import AudioExtractor
-from notes_ai.adapters.extractors.image import ImageExtractor
-from notes_ai.adapters.extractors.pdf import PDFExtractor
-from notes_ai.adapters.extractors.web import WebExtractor
-from notes_ai.adapters.extractors.youtube import YouTubeExtractor
-from notes_ai.adapters.llm.groq import GroqLLMClient
-from notes_ai.adapters.llm_services.note_generator import NoteGenerator
-from notes_ai.adapters.storage.markdown import MarkdownNoteStore
+from notes_ai.adapters.extractors import (
+    AudioExtractor,
+    ImageExtractor,
+    PDFExtractor,
+    WebExtractor,
+    YouTubeExtractor,
+)
+from notes_ai.adapters.llm import GroqLLMClient
+from notes_ai.adapters.llm_services import NoteGenerator
+from notes_ai.adapters.storage import MarkdownNoteStore
 from notes_ai.config import get_config
 from notes_ai.ingestion import create_source
 from notes_ai.interfaces.exceptions import ConfigurationError

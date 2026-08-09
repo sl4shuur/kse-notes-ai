@@ -2,10 +2,8 @@
 
 from collections.abc import Sequence
 
-from notes_ai.ingestion.router import extract_content
-from notes_ai.interfaces.extractor import TextExtractor
-from notes_ai.interfaces.generator import NoteGenerationService
-from notes_ai.interfaces.storage import NoteStore
+from notes_ai.ingestion import extract_content
+from notes_ai.interfaces import NoteGenerationService, NoteStore, TextExtractor
 from notes_ai.models import Note, Source
 
 

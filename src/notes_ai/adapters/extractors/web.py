@@ -5,7 +5,7 @@ import trafilatura
 from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 from playwright.async_api import async_playwright
 
-from notes_ai.interfaces.extractor import TextExtractor
+from notes_ai.interfaces import TextExtractor
 from notes_ai.loggers import CustomLogger
 from notes_ai.models import ExtractedContent, Source, WebExtractionMetadata
 

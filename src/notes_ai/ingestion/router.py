@@ -2,8 +2,7 @@
 
 from collections.abc import Sequence
 
-from notes_ai.interfaces.exceptions import UnsupportedSourceError
-from notes_ai.interfaces.extractor import TextExtractor
+from notes_ai.interfaces import TextExtractor, UnsupportedSourceError
 from notes_ai.models import ExtractedContent, Source
 
 

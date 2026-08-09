@@ -4,7 +4,7 @@ from typing import Literal
 
 import fitz  # PyMuPDF library
 
-from notes_ai.interfaces.extractor import TextExtractor
+from notes_ai.interfaces import TextExtractor
 from notes_ai.loggers import CustomLogger
 from notes_ai.models import ExtractedContent, PdfExtractionMetadata, Source
 

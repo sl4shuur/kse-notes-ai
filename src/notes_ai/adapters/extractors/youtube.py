@@ -7,13 +7,14 @@ import webvtt
 import yt_dlp
 from youtube_transcript_api import NoTranscriptFound, TranscriptsDisabled, YouTubeTranscriptApi
 
-from notes_ai.adapters.extractors.audio import create_audio_chunks, transcribe_with_faster_whisper
-from notes_ai.adapters.extractors.downloader import yt_dlp_download
 from notes_ai.config import get_config
 from notes_ai.interfaces.exceptions import ExtractionError
-from notes_ai.interfaces.extractor import TextExtractor
+from notes_ai.interfaces import TextExtractor
 from notes_ai.loggers import CustomLogger
 from notes_ai.models import ExtractedContent, Source, YouTubeExtractionMetadata
+
+from .audio import create_audio_chunks, transcribe_with_faster_whisper
+from .downloader import yt_dlp_download
 
 
 class YouTubeExtractor(TextExtractor):

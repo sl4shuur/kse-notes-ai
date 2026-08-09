@@ -1,9 +1,10 @@
 """Create validated sources from user-provided locations."""
 
-from notes_ai.ingestion.detection import detect_source_type
-from notes_ai.ingestion.metadata import extract_source_metadata
 from notes_ai.loggers import CustomLogger
 from notes_ai.models import Source
+
+from .detection import detect_source_type
+from .metadata import extract_source_metadata
 
 
 def create_source(

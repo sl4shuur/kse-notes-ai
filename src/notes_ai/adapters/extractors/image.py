@@ -1,7 +1,7 @@
 import base64
 from pathlib import Path
 
-from notes_ai.interfaces.extractor import TextExtractor
+from notes_ai.interfaces import TextExtractor
 from notes_ai.loggers import CustomLogger
 from notes_ai.models import ExtractedContent, ImageExtractionMetadata, Source
 

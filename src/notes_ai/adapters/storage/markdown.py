@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from notes_ai.interfaces.storage import NoteStore
+from notes_ai.interfaces import NoteStore
 from notes_ai.models import Note
 
 
