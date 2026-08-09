@@ -20,6 +20,7 @@ Notes AI turns YouTube videos, web articles, PDFs, images, and audio files into 
 
 - **Backend:** Python 3.13, FastAPI
 - **Package management:** `uv`
+- **CLI:** Rich Click
 - **LLM provider:** Groq
 - **Frontend:** React, TypeScript, Vite
 - **Vector storage:** ChromaDB
@@ -69,12 +70,12 @@ uv run notes-ai --help
 The equivalent module command is:
 
 ```bash
-uv run python -m notes_ai.main --help
+uv run python -m notes_ai.cli --help
 ```
 
 ### Tests
 
-The focused offline test suite is the remaining Phase 1 task. Once added, run:
+Focused offline coverage is being added incrementally. Run it with:
 
 ```bash
 uv run --group test python -m pytest -q
@@ -127,6 +128,7 @@ The focus of this phase is not to redesign the whole application. It is to:
 src/
 └── notes_ai/
     ├── __init__.py
+    ├── cli.py
     ├── main.py
     ├── models.py
     ├── pipeline.py
@@ -156,8 +158,8 @@ The structure should remain small. New folders should be added only when there i
 - [ ] Move application code under `src/notes_ai/`
 - [ ] Configure `notes_ai` as the only importable package
 - [ ] Replace imports such as `from src...` with `from notes_ai...`
-- [ ] Add a `notes-ai` CLI entry point in `pyproject.toml`
-- [ ] Keep the root `main.py` only as a temporary compatibility wrapper, then remove it
+- [x] Add a `notes-ai` CLI entry point in `pyproject.toml`
+- [x] Keep argument parsing in `cli.py` and application composition in `main.py`
 - [ ] Update `.gitignore` and remove committed caches, generated files, and local environment files
 
 All internal imports should follow the same pattern:
@@ -331,16 +333,16 @@ The phase is complete when:
 
 Legacy codebase was refactored into a structured Python package (`notes_ai`). Here is what we did:
 
-1. **Create the Python package**: Application code now lives under `src/notes_ai/`, with the `notes-ai` CLI entry point configured in `pyproject.toml` and CLI composition kept in `src/notes_ai/main.py`.
+1. **Create the Python package**: Application code now lives under `src/notes_ai/`, with the `notes-ai` entry point configured in `pyproject.toml`. Rich Click commands and argument validation live in `src/notes_ai/cli.py`, while framework-independent application composition stays in `src/notes_ai/main.py`.
 2. **Add shared models**: Built immutable Pydantic domain objects (`Source`, `ExtractedContent`, and `Note`) with discriminated, source-specific metadata models in `src/notes_ai/models.py`.
-3. **Define simple interfaces and custom exceptions**: Established `Protocol` contracts for extractors, note generation, LLM access, and storage in `src/notes_ai/interfaces/`, and `interfaces/exceptions.py` defines application errors (`UnsupportedSourceError`, `ExtractionError`, `LLMError`, `StorageError`).
+3. **Define simple interfaces and custom exceptions**: Established `Protocol` contracts for extractors, note generation, LLM access, and storage in `src/notes_ai/interfaces/`, and `interfaces/exceptions.py` defines application errors (`UnsupportedSourceError`, `ExtractionError`, `LLMError`, `StorageError`, `ConfigurationError`).
 4. **Move external logic into adapters**: Extraction implementations (YouTube, Web, PDF, Image, and Audio), `GroqLLMClient`, and `MarkdownNoteStore` now live under `src/notes_ai/adapters/` behind small interfaces.
 5. **Implement a focused synthesis pipeline**: `src/notes_ai/pipeline.py` now contains only high-level orchestration: extract, generate, and save. Source detection, typed provider metadata, source construction, and extractor selection live in `src/notes_ai/ingestion/`; note formatting and cleanup stay behind the generation service.
 6. **Centralize configuration**: `src/notes_ai/config.py` provides validated application settings, runtime paths, `.env` loading, and logging configuration.
 7. **Simplify note generation**: Replaced the outline/enrichment/color service chain with one `NoteGenerator` that creates the complete colored note, followed by the retained final cleaner.
 8. **Remove dead and duplicate code**: Deleted the unused `services.py`, the root configuration module, `config_helper.py`, and obsolete LLM service modules.
 9. **Standardize quality tooling**: Added a dedicated `test` dependency group and repository-wide Ruff linting/formatting configuration.
-10. **Update documentation**: CLI documentation was aligned with the package entry point and current module boundaries.
+10. **Update documentation**: CLI documentation was aligned with the Rich Click entry point and current module boundaries.
 
 #### CLI User Guide & Documentation
 
@@ -349,7 +351,7 @@ This guide provides full documentation on using the `notes-ai` Command-Line Inte
 ##### Quick Start & Global Help
 
 ```bash
-uv run python -m notes_ai.main --help
+uv run python -m notes_ai.cli --help
 ```
 *or via the installed package entry point:*
 ```bash
@@ -358,26 +360,24 @@ uv run notes-ai --help
 
 ##### Global Help Output
 ```text
-usage: main.py [-h] [-o OUTPUT_DIR] [-n NAME] [-v] sources [sources ...]
+Usage: python -m notes_ai.cli [OPTIONS] SOURCE...
 
-Notes AI — Generate structured study notes from YouTube, web, PDF, image, or audio sources.
+Generate structured study notes from SOURCE URLs or local files.
 
-positional arguments:
-  sources               One or more URLs or local file paths to process.
-
-options:
-  -h, --help            show this help message and exit
-  -o, --output-dir OUTPUT_DIR
-                        Directory to save the generated markdown note(s) (default: output).
-  -n, --name NAME       Custom title/name for the note (only applicable when processing a single source).
+Options:
+  SOURCES               SOURCE... [required]
+  -o, --output-dir      Directory where generated Markdown notes are saved.
+                        [default: output]
+  -n, --name            Custom note name; valid only when processing one source.
   -v, --verbose         Enable debug logging.
+  -h, --help            Show this message and exit.
 ```
 
 ##### Command Reference
 
 ###### Synopsis
 ```bash
-uv run python -m notes_ai.main <SOURCES...> [OPTIONS]
+uv run python -m notes_ai.cli <SOURCES...> [OPTIONS]
 ```
 
 ###### Positional Arguments
@@ -409,19 +409,19 @@ uv run python -m notes_ai.main <SOURCES...> [OPTIONS]
 
 **YouTube Video:**
 ```bash
-uv run python -m notes_ai.main "https://www.youtube.com/watch?v=Z6z_feacXW8"
+uv run python -m notes_ai.cli "https://www.youtube.com/watch?v=Z6z_feacXW8"
 ```
 *Saves output to `./output/note_1.md`*
 
 **PDF Document with Custom Name & Output Directory:**
 ```bash
-uv run python -m notes_ai.main "/path/to/report.pdf" -o my_notes -n "Elections_Analysis"
+uv run python -m notes_ai.cli "/path/to/report.pdf" -o my_notes -n "Elections_Analysis"
 ```
 *Saves output to `./my_notes/Elections_Analysis.md`*
 
 **Image File with Verbose Logging:**
 ```bash
-uv run python -m notes_ai.main "/path/to/diagram.png" -v
+uv run python -m notes_ai.cli "/path/to/diagram.png" -v
 ```
 
 ###### 2. Batch Processing (Multiple Sources)
@@ -429,7 +429,7 @@ uv run python -m notes_ai.main "/path/to/diagram.png" -v
 You can pass multiple files or URLs at once in a single command:
 
 ```bash
-uv run python -m notes_ai.main "https://youtu.be/Z6z_feacXW8" "report.pdf" "lecture.mp3" -o batch_output
+uv run python -m notes_ai.cli "https://youtu.be/Z6z_feacXW8" "report.pdf" "lecture.mp3" -o batch_output
 ```
 
 *Processes each source sequentially and creates:*

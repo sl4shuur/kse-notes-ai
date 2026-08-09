@@ -72,6 +72,7 @@ select = ["E", "F", "I", "UP", "B", "C4"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 
 [build-system]
@@ -82,5 +83,5 @@ build-backend = "hatchling.build"
 packages = ["src/notes_ai"]
 
 [project.scripts]
-notes-ai = "notes_ai.main:main"
+notes-ai = "notes_ai.cli:cli"
 

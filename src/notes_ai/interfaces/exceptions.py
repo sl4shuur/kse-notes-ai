@@ -24,3 +24,7 @@ class StorageError(Exception):
         self.extra_info = extra_info
 
         super().__init__(message)
+
+
+class ConfigurationError(Exception):
+    """Raised when required application configuration is unavailable."""

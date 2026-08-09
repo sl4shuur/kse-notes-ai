@@ -1,9 +1,8 @@
-"""Simple CLI for Notes AI using argparse and the package pipeline."""
+"""Application composition and note-generation workflow."""
 
-import argparse
 import asyncio
 import logging
-import sys
+from collections.abc import Sequence
 from pathlib import Path
 
 from notes_ai.adapters.extractors.audio import AudioExtractor
@@ -16,61 +15,44 @@ from notes_ai.adapters.llm_services.note_generator import NoteGenerator
 from notes_ai.adapters.storage.markdown import MarkdownNoteStore
 from notes_ai.config import get_config
 from notes_ai.ingestion import create_source
+from notes_ai.interfaces.exceptions import ConfigurationError
 from notes_ai.loggers import CustomLogger
+from notes_ai.models import Note
 from notes_ai.pipeline import create_note
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(
-        description=(
-            "Notes AI — Generate structured study notes from YouTube, web, PDF, "
-            "image, or audio sources."
-        )
-    )
-    parser.add_argument(
-        "sources",
-        nargs="+",
-        type=str,
-        help="One or more URLs or local file paths to process.",
-    )
-    parser.add_argument(
-        "-o",
-        "--output-dir",
-        type=str,
-        default="output",
-        help="Directory to save the generated markdown note(s) (default: output).",
-    )
-    parser.add_argument(
-        "-n",
-        "--name",
-        type=str,
-        default=None,
-        help="Custom title/name for the note (only applicable when processing a single source).",
-    )
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        action="store_true",
-        help="Enable debug logging.",
-    )
+def _note_title(
+    source_path: str,
+    index: int,
+    source_count: int,
+    custom_name: str | None,
+) -> str:
+    if custom_name and source_count == 1:
+        return custom_name
+    if source_path.startswith(("http://", "https://")):
+        return f"note_{index}"
+    return Path(source_path).stem
 
-    args = parser.parse_args()
+
+async def generate_notes(
+    sources: Sequence[str],
+    *,
+    output_dir: str | Path = "output",
+    name: str | None = None,
+    verbose: bool = False,
+) -> list[Note]:
+    """Generate notes for sources using the configured application adapters."""
     config = get_config()
     logger = CustomLogger(config.app_name)
-    if args.verbose:
+    if verbose:
         logger.setLevel(logging.DEBUG)
 
-    groq_key = config.groq_api_key
-    if not groq_key:
-        logger.error(
-            "GROQ_API_KEY environment variable is not set. "
-            "Please set it in your environment or .env file."
-        )
-        sys.exit(1)
+    if not config.groq_api_key:
+        raise ConfigurationError("GROQ_API_KEY is not set. Add it to the environment or .env file.")
 
-    llm = GroqLLMClient(api_key=groq_key)
+    llm = GroqLLMClient(api_key=config.groq_api_key)
     generator = NoteGenerator(llm, logger)
-    store = MarkdownNoteStore(output_dir=args.output_dir)
+    store = MarkdownNoteStore(output_dir=output_dir)
     extractors = [
         YouTubeExtractor(logger=logger, temp_audio_dir=config.temp_audio_dir),
         WebExtractor(logger=logger),
@@ -79,42 +61,50 @@ def main() -> None:
         AudioExtractor(logger=logger),
     ]
 
-    for idx, source_path in enumerate(args.sources, start=1):
-        logger.info(f"[{idx}/{len(args.sources)}] Processing source: {source_path}")
-        title = (
-            args.name
-            if (args.name and len(args.sources) == 1)
-            else (
-                Path(source_path).stem
-                if not source_path.startswith(("http://", "https://"))
-                else f"note_{idx}"
-            )
-        )
+    generated_notes: list[Note] = []
+    source_count = len(sources)
+
+    for index, source_path in enumerate(sources, start=1):
+        logger.info("[%s/%s] Processing source: %s", index, source_count, source_path)
+        title = _note_title(source_path, index, source_count, name)
 
         try:
-            source_obj = create_source(
-                source_path,
-                logger,
-                title=title,
-            )
-            logger.info("Source detected: %s", source_obj.input_type.value)
-        except Exception as e:
-            logger.error(f"Unsupported source or file not found ({source_path}): {e}")
+            source = create_source(source_path, logger, title=title)
+            logger.info("Source detected: %s", source.input_type.value)
+        except Exception as error:
+            logger.error("Unsupported source or file not found (%s): %s", source_path, error)
             continue
 
         try:
-            note = asyncio.run(
-                create_note(
-                    source=source_obj,
-                    extractors=extractors,
-                    generator=generator,
-                    store=store,
-                )
+            note = await create_note(
+                source=source,
+                extractors=extractors,
+                generator=generator,
+                store=store,
             )
-            logger.success(f"Successfully generated note: {args.output_dir}/{note.title}.md")
-        except Exception as e:
-            logger.error(f"Failed to create note for {source_path}: {e}")
+        except Exception as error:
+            logger.error("Failed to create note for %s: %s", source_path, error)
+            continue
+
+        generated_notes.append(note)
+        logger.success("Successfully generated note: %s/%s.md", output_dir, note.title)
+
+    return generated_notes
 
 
-if __name__ == "__main__":
-    main()
+def run(
+    sources: Sequence[str],
+    *,
+    output_dir: str | Path = "output",
+    name: str | None = None,
+    verbose: bool = False,
+) -> list[Note]:
+    """Run the asynchronous application workflow from synchronous callers."""
+    return asyncio.run(
+        generate_notes(
+            sources,
+            output_dir=output_dir,
+            name=name,
+            verbose=verbose,
+        )
+    )
