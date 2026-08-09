@@ -20,6 +20,7 @@ Notes AI turns YouTube videos, web articles, PDFs, images, and audio files into 
 
 - **Backend:** Python 3.13, FastAPI
 - **Package management:** `uv`
+- **CLI:** Rich Click
 - **LLM provider:** Groq
 - **Frontend:** React, TypeScript, Vite
 - **Vector storage:** ChromaDB
@@ -44,7 +45,7 @@ Notes AI turns YouTube videos, web articles, PDFs, images, and audio files into 
 ```bash
 git clone <repo-url>
 cd kse-notes-ai
-uv sync --group dev
+uv sync --group dev --group test
 cp .env.example .env
 ```
 
@@ -60,22 +61,24 @@ On Windows, install the Microsoft Visual C++ Redistributable if a native depende
 
 ### Current execution
 
-The repository is currently being migrated to the package layout described below. During the refactoring phase, verify the available CLI commands with:
-
-```bash
-uv run python main.py --help
-```
-
-After the package migration, the preferred entry point will be:
+Use the installed package entry point:
 
 ```bash
 uv run notes-ai --help
 ```
 
-### Tests
+The equivalent module command is:
 
 ```bash
-uv run pytest -q
+uv run python -m notes_ai.cli --help
+```
+
+### Tests
+
+Focused offline coverage is being added incrementally. Run it with:
+
+```bash
+uv run --group test python -m pytest -q
 ```
 
 ---
@@ -96,11 +99,11 @@ uv run pytest -q
 **Kickoff:** 27 July 2026  
 **Demo:** 16 August 2026
 
-| Phase | Focus | Midweek check-in | Deadline |
-| --- | --- | --- | --- |
-| 1 | Refactor and package foundation | 29 July | 2 August |
-| 2 | Multi-step synthesis and web application | 5 August | 9 August |
-| 3 | Knowledge base, containers, observability, and demo | 12 August | 16 August |
+| Phase | Focus                                               | Midweek check-in | Deadline  |
+| ----- | --------------------------------------------------- | ---------------- | --------- |
+| 1     | Refactor and package foundation                     | 29 July          | 2 August  |
+| 2     | Multi-step synthesis and web application            | 5 August         | 9 August  |
+| 3     | Knowledge base, containers, observability, and demo | 12 August        | 16 August |
 
 The implementation should progress from a simple working version to a clean extensible version. LangGraph or another agent framework is intentionally out of scope unless the plain-class pipeline becomes insufficient.
 
@@ -126,6 +129,7 @@ src/
 └── notes_ai/
     ├── __init__.py
     ├── cli.py
+    ├── main.py
     ├── models.py
     ├── pipeline.py
     ├── interfaces/
@@ -154,8 +158,8 @@ The structure should remain small. New folders should be added only when there i
 - [ ] Move application code under `src/notes_ai/`
 - [ ] Configure `notes_ai` as the only importable package
 - [ ] Replace imports such as `from src...` with `from notes_ai...`
-- [ ] Add a `notes-ai` CLI entry point in `pyproject.toml`
-- [ ] Keep the root `main.py` only as a temporary compatibility wrapper, then remove it
+- [x] Add a `notes-ai` CLI entry point in `pyproject.toml`
+- [x] Keep argument parsing in `cli.py` and application composition in `main.py`
 - [ ] Update `.gitignore` and remove committed caches, generated files, and local environment files
 
 All internal imports should follow the same pattern:
@@ -233,22 +237,13 @@ Use one small orchestration function in `notes_ai/pipeline.py` instead of introd
 ```python
 async def create_note(
     source: Source,
-    extractors: list[TextExtractor],
-    llm: LLMClient,
+    extractors: Sequence[TextExtractor],
+    generator: NoteGenerationService,
     store: NoteStore,
 ) -> Note:
-    extractor = next(
-        (item for item in extractors if item.supports(source)),
-        None,
-    )
-
-    if extractor is None:
-        raise UnsupportedSourceError(source.location)
-
-    content = await extractor.extract(source)
-    note = await generate_note(content, llm)
+    content = await extract_content(source, extractors)
+    note = await generator.generate(source, content)
     await store.save(note)
-
     return note
 ```
 
@@ -263,12 +258,12 @@ Detailed extraction, prompt construction, formatting, and persistence should sta
 
 ### 6. Preserve the current generation flow
 
-Do not rewrite the full note-generation pipeline during this phase.
+Keep complete note generation behind one stable service boundary during simplification.
 
-- [ ] Wrap the current generation flow behind one function such as `generate_note()`
-- [ ] Keep existing outline, formatting, artwork, and cleanup steps working
-- [ ] Move these steps gradually only when necessary
-- [ ] Avoid mixing refactoring with major prompt or product changes
+- [x] Consolidate note structure, learning aids, and semantic colors in one `NoteGenerator`
+- [x] Keep final Markdown normalization in `final_cleaner.py`
+- [x] Remove obsolete outline, enrichment, and separate color-markup services
+- [ ] Add focused regression tests for the generated Markdown contract
 
 The goal is to create a stable boundary around the current behavior before improving it in later phases.
 
@@ -314,7 +309,7 @@ Tests should not require a real Groq key, browser, FFmpeg, or external network a
 - [ ] Document the basic request flow:
 
 ```text
-CLI → create_note() → extractor → LLM → Markdown storage
+CLI → create_source() → create_note() → extractor → generator → cleaner → Markdown storage
 ```
 
 - [ ] Add a short note explaining the role of `interfaces/` and `adapters/`
@@ -334,17 +329,149 @@ The phase is complete when:
 - [ ] secrets, caches, generated notes, and local environment files are not tracked
 - [ ] README instructions match the actual repository
 
+### Phase 1 progress
+
+Legacy codebase was refactored into a structured Python package (`notes_ai`). Here is what we did:
+
+1. **Create the Python package**: Application code now lives under `src/notes_ai/`, with the `notes-ai` entry point configured in `pyproject.toml`. Rich Click commands and argument validation live in `src/notes_ai/cli.py`, while framework-independent application composition stays in `src/notes_ai/main.py`.
+2. **Add shared models**: Built immutable Pydantic domain objects (`Source`, `ExtractedContent`, and `Note`) with discriminated, source-specific metadata models in `src/notes_ai/models.py`.
+3. **Define simple interfaces and custom exceptions**: Established `Protocol` contracts for extractors, note generation, LLM access, and storage in `src/notes_ai/interfaces/`, and `interfaces/exceptions.py` defines application errors (`UnsupportedSourceError`, `ExtractionError`, `LLMError`, `StorageError`, `ConfigurationError`).
+4. **Move external logic into adapters**: Extraction implementations (YouTube, Web, PDF, Image, and Audio), `GroqLLMClient`, and `MarkdownNoteStore` now live under `src/notes_ai/adapters/` behind small interfaces.
+5. **Implement a focused synthesis pipeline**: `src/notes_ai/pipeline.py` now contains only high-level orchestration: extract, generate, and save. Source detection, typed provider metadata, source construction, and extractor selection live in `src/notes_ai/ingestion/`; note formatting and cleanup stay behind the generation service.
+6. **Centralize configuration**: `src/notes_ai/config.py` provides validated application settings, runtime paths, `.env` loading, and logging configuration.
+7. **Simplify note generation**: Replaced the outline/enrichment/color service chain with one `NoteGenerator` that creates the complete colored note, followed by the retained final cleaner.
+8. **Remove dead and duplicate code**: Deleted the unused `services.py`, the root configuration module, `config_helper.py`, and obsolete LLM service modules.
+9. **Standardize quality tooling**: Added a dedicated `test` dependency group and repository-wide Ruff linting/formatting configuration.
+10. **Update documentation**: CLI documentation was aligned with the Rich Click entry point and current module boundaries.
+
+#### CLI User Guide & Documentation
+
+This guide provides full documentation on using the `notes-ai` Command-Line Interface (CLI).
+
+##### Quick Start & Global Help
+
+```bash
+uv run python -m notes_ai.cli --help
+```
+
+_or via the installed package entry point:_
+
+```bash
+uv run notes-ai --help
+```
+
+##### Global Help Output
+
+```text
+Usage: python -m notes_ai.cli [OPTIONS] SOURCE...
+
+Generate structured study notes from SOURCE URLs or local files.
+
+Options:
+  SOURCES               SOURCE... [required]
+  -o, --output-dir      Directory where generated Markdown notes are saved.
+                        [default: output]
+  -n, --name            Custom note name; valid only when processing one source.
+  -v, --verbose         Enable debug logging.
+  -h, --help            Show this message and exit.
+```
+
+##### Command Reference
+
+###### Synopsis
+
+```bash
+uv run python -m notes_ai.cli <SOURCES...> [OPTIONS]
+```
+
+###### Positional Arguments
+
+| Argument  | Type  |      Nargs      | Description                                                                            |
+| :-------- | :---- | :-------------: | :------------------------------------------------------------------------------------- |
+| `sources` | `str` | `+` (1 or more) | One or more YouTube URLs, Web URLs, or local file paths (`.pdf`, `.png`, `.mp3`, etc.) |
+
+###### Options & Flags
+
+| Option / Flag  | Short | Type  | Default  | Description                                                                 |
+| :------------- | :---: | :---- | :------- | :-------------------------------------------------------------------------- |
+| `--output-dir` | `-o`  | `str` | `output` | Directory where generated `.md` note files will be saved                    |
+| `--name`       | `-n`  | `str` | `None`   | Custom note filename (without extension). Only valid for single-source runs |
+| `--verbose`    | `-v`  | flag  | `False`  | Enables `DEBUG` level log output in terminal                                |
+| `--help`       | `-h`  | flag  | —        | Displays the global help screen and exits                                   |
+
+##### Supported Source Formats
+
+| Format          | Category    | File Extension / Pattern                         | Extractor Adapter  |
+| :-------------- | :---------- | :----------------------------------------------- | :----------------- |
+| **YouTube**     | Video URL   | `youtube.com/watch?v=...`, `youtu.be/...`        | `YouTubeExtractor` |
+| **Web Pages**   | Article URL | `http://...`, `https://...`                      | `WebExtractor`     |
+| **PDF**         | Document    | `.pdf`                                           | `PDFExtractor`     |
+| **Image (OCR)** | Image       | `.jpg`, `.jpeg`, `.png`, `.bmp`, `.webp`         | `ImageExtractor`   |
+| **Audio**       | Audio       | `.mp3`, `.wav`, `.m4a`, `.opus`, `.flac`, `.aac` | `AudioExtractor`   |
+
+##### Examples
+
+###### 1. Single Source Processing
+
+**YouTube Video:**
+
+```bash
+uv run python -m notes_ai.cli "https://www.youtube.com/watch?v=Z6z_feacXW8"
+```
+
+_Saves output to `./output/note_1.md`_
+
+**PDF Document with Custom Name & Output Directory:**
+
+```bash
+uv run python -m notes_ai.cli "/path/to/report.pdf" -o my_notes -n "Elections_Analysis"
+```
+
+_Saves output to `./my_notes/Elections_Analysis.md`_
+
+**Image File with Verbose Logging:**
+
+```bash
+uv run python -m notes_ai.cli "/path/to/diagram.png" -v
+```
+
+###### 2. Batch Processing (Multiple Sources)
+
+You can pass multiple files or URLs at once in a single command:
+
+```bash
+uv run python -m notes_ai.cli "https://youtu.be/Z6z_feacXW8" "report.pdf" "lecture.mp3" -o batch_output
+```
+
+_Processes each source sequentially and creates:_
+
+- `./batch_output/note_1.md`
+- `./batch_output/report.md`
+- `./batch_output/lecture.md`
+
+##### Environment Setup
+
+The CLI uses Groq LLMs to synthesize extracted content into study notes. Make sure your `GROQ_API_KEY` is defined in your `.env` file or environment variables:
+
+```bash
+# In your .env file
+GROQ_API_KEY="your_actual_groq_api_key"
+
+# Or exported directly in shell
+export GROQ_API_KEY="your_actual_groq_api_key"
+```
+
 ---
 
 ## Phase 2 — Multi-step synthesis and web application
 
 ### Goal
 
-Replace the transitional legacy orchestration with explicit pipeline steps and expose note creation through a stable HTTP API and a usable React interface.
+Build on the simplified orchestration with observable steps only where they add value, and expose note creation through a stable HTTP API and a usable React interface.
 
 ### Synthesis pipeline
 
-Create a shared mutable or immutable `NoteContext` model containing the extracted text, outline, draft, enriched Markdown, artifacts, metadata, and step status.
+Keep the current one-pass `NoteGenerator` as the default. Introduce a shared immutable `NoteContext` only when API progress reporting or optional processing steps require it.
 
 Define a step interface:
 
@@ -354,17 +481,15 @@ class SynthesisStep(Protocol):
     async def run(self, context: NoteContext) -> NoteContext: ...
 ```
 
-Implement:
+Implement incrementally:
 
-- [ ] `PlannerStep` — create the note outline
-- [ ] `WriterStep` — produce the main draft
-- [ ] `EnrichmentStep` — add examples and metaphors where useful
-- [ ] `ColorMarkupStep` — apply semantic highlighting
-- [ ] `VisualizationStep` — generate diagrams or plots through existing art helpers
-- [ ] `CleanupStep` — normalize and validate final Markdown
-- [ ] `SequentialSynthesisPipeline` — run configured steps in order
+- [ ] `ExtractionStep` — delegate source extraction through the existing router
+- [ ] `GenerationStep` — delegate complete note creation to the existing `NoteGenerator`
+- [ ] `PersistenceStep` — save finalized notes through `NoteStore`
+- [ ] `VisualizationStep` — optionally generate diagrams or plots after the core flow is stable
+- [ ] `SequentialSynthesisPipeline` — run configured steps in order when step-level status is needed
 
-The pipeline should support a reduced set of steps without creating separate implementations for every mode. A fast mode may skip enrichment and visualization.
+Do not split the current generation prompt into multiple agents solely for structure. The one-pass flow should remain the default, with optional steps added only when they are independently useful and testable.
 
 ### Backend API
 
@@ -406,7 +531,7 @@ Additional requirements:
 - [ ] at least three source types can create notes through the API
 - [ ] React can create, list, and display notes
 - [ ] each synthesis step is visible in logs or traces
-- [ ] fast and full pipeline configurations are demonstrable
+- [ ] the one-pass default and any optional pipeline steps are demonstrable
 - [ ] three representative sample notes are available for the demo
 - [ ] unit tests cover step ordering and failure propagation
 - [ ] API integration tests cover create, list, and retrieve operations
@@ -443,11 +568,11 @@ Tasks:
 
 Create containers for at least:
 
-| Service | Responsibility |
-| --- | --- |
-| `api` | FastAPI backend and note pipeline |
-| `web` | React production build |
-| `phoenix` | tracing and LLM observability |
+| Service   | Responsibility                    |
+| --------- | --------------------------------- |
+| `api`     | FastAPI backend and note pipeline |
+| `web`     | React production build            |
+| `phoenix` | tracing and LLM observability     |
 
 Optional: run ChromaDB as a separate service when this simplifies persistence or inspection.
 
@@ -545,7 +670,6 @@ kse-notes-ai/
 ├── .gitignore
 ├── docker-compose.yml
 ├── pyproject.toml
-├── config.py
 ├── README.md
 └── uv.lock
 ```
@@ -591,12 +715,12 @@ The project is ready for the final demo when:
 Suggested checks:
 
 ```bash
-uv run pytest -q
-uv run ruff check .
-uv run ruff format --check .
+uv run --group test python -m pytest -q
+uv run --group test ruff check .
+uv run --group test ruff format --check .
 ```
 
-Ruff should be added to the development dependencies before these checks become mandatory in CI.
+Ruff and pytest are maintained in the `test` dependency group; the same commands should be used in CI.
 
 ## License
 
