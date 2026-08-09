@@ -1,21 +1,24 @@
-import re
 import shutil
 from pathlib import Path
-from pydub import AudioSegment
-from faster_whisper import WhisperModel
 
+from faster_whisper import WhisperModel
+from pydub import AudioSegment
+
+from notes_ai.interfaces.extractor import TextExtractor
 from notes_ai.loggers import CustomLogger
 from notes_ai.models import AudioExtractionMetadata, ExtractedContent, Source
 
-from notes_ai.interfaces.extractor import TextExtractor
-def create_audio_chunks(audio_file: str | Path, chunk_duration_ms: int, temp_dir: str | Path, logger: CustomLogger) -> list[Path]:
+
+def create_audio_chunks(
+    audio_file: str | Path, chunk_duration_ms: int, temp_dir: str | Path, logger: CustomLogger
+) -> list[Path]:
     """
     Create chunks of audio from a given audio file.
 
     Args:
         audio_file (str | Path): The path to the audio file to chunk.
         chunk_duration_ms (int): The duration of each chunk in milliseconds.
-        temp_dir (str | Path, optional): The directory to store temporary files. Defaults to TEMP_DIR.
+        temp_dir (str | Path, optional): The directory used for temporary files.
 
     Returns:
         list[Path]: A list of paths to the created audio chunks.
@@ -37,17 +40,13 @@ def create_audio_chunks(audio_file: str | Path, chunk_duration_ms: int, temp_dir
         chunk_path = cur_temp_dir / chunk_filename
         chunk.export(chunk_path, format="mp3")
         chunk_paths.append(chunk_path)
-        logger.debug(
-            f"Created audio chunk from {start_ms // 1000}s to {end_ms // 1000}s")
+        logger.debug(f"Created audio chunk from {start_ms // 1000}s to {end_ms // 1000}s")
 
     return chunk_paths
 
 
 def _transcribe_audio_chunk_local(
-    model: WhisperModel,
-    chunk_path: str | Path,
-    logger: CustomLogger,
-    language: str | None = None
+    model: WhisperModel, chunk_path: str | Path, logger: CustomLogger, language: str | None = None
 ) -> str:
     chunk_path = Path(chunk_path)
     chunk_name = chunk_path.name
@@ -61,23 +60,21 @@ def _transcribe_audio_chunk_local(
     segments, info = model.transcribe(
         str(chunk_path),
         language=language,
-        log_progress=True,        # Show progress in console
-        beam_size=5,              # Higher = better quality, slower
-        best_of=5,                # Number of candidates to consider
-        temperature=0.0,          # Deterministic output
-        vad_filter=True,          # Voice Activity Detection
-        vad_parameters=dict(
-            min_silence_duration_ms=500,
-            threshold=0.5
-        ),
-        word_timestamps=False     # Set to True if you need word-level timing
+        log_progress=True,  # Show progress in console
+        beam_size=5,  # Higher = better quality, slower
+        best_of=5,  # Number of candidates to consider
+        temperature=0.0,  # Deterministic output
+        vad_filter=True,  # Voice Activity Detection
+        vad_parameters={"min_silence_duration_ms": 500, "threshold": 0.5},
+        word_timestamps=False,  # Set to True if you need word-level timing
     )
 
     # Combine segments into a single transcription
     transcription = " ".join([segment.text for segment in segments])
 
     logger.debug(
-        f"Detected language: {info.language} (probability: {info.language_probability:.2f})")
+        f"Detected language: {info.language} (probability: {info.language_probability:.2f})"
+    )
     logger.debug(f"Transcribed chunk {chunk_name}: {transcription[:50]}...")
 
     return transcription
@@ -89,17 +86,16 @@ def transcribe_with_faster_whisper(
     model_size: str = "tiny",  # tiny, base, small, medium, large-v1...
     device: str = "cpu",
     compute_type: str = "int8",  # int8, int16, float16, float32
-    language: str | None = None
+    language: str | None = None,
 ) -> str:
-    logger.debug(
-        f"Loading Faster Whisper model: {model_size} on {device} with {compute_type}")
+    logger.debug(f"Loading Faster Whisper model: {model_size} on {device} with {compute_type}")
 
     model = WhisperModel(
         model_size,
         device=device,
         compute_type=compute_type,
         download_root=None,  # Uses default cache directory
-        local_files_only=False
+        local_files_only=False,
     )
 
     # Get chunk paths
@@ -108,21 +104,17 @@ def transcribe_with_faster_whisper(
     else:
         chunk_paths = sorted(Path(chunks_dir).glob("*.mp3"))
 
-    logger.info(
-        f"Found {len(chunk_paths)} audio chunks to transcribe locally.")
+    logger.info(f"Found {len(chunk_paths)} audio chunks to transcribe locally.")
 
     transcriptions = []
 
     for i, chunk_path in enumerate(chunk_paths, 1):
-        logger.debug(
-            f"Processing chunk {i}/{len(chunk_paths)}: {chunk_path.name}")
-        transcription = _transcribe_audio_chunk_local(
-            model, chunk_path, logger, language)
+        logger.debug(f"Processing chunk {i}/{len(chunk_paths)}: {chunk_path.name}")
+        transcription = _transcribe_audio_chunk_local(model, chunk_path, logger, language)
         transcriptions.append(transcription)
 
     result = "\n".join(transcriptions)
-    logger.info(
-        f"Local transcription completed. Total length: {len(result)} chars")
+    logger.info(f"Local transcription completed. Total length: {len(result)} chars")
     return result
 
 
@@ -146,7 +138,7 @@ class AudioExtractor(TextExtractor):
         chunks = create_audio_chunks(
             audio_file=path,
             chunk_duration_ms=self.chunk_duration_ms,
-            temp_dir = self.temp_dir,
+            temp_dir=self.temp_dir,
             logger=self.logger,
         )
         self.logger.debug(f"Created {len(chunks)} audio chunks")
@@ -156,9 +148,7 @@ class AudioExtractor(TextExtractor):
             logger=self.logger,
         )
 
-        self.logger.info(
-            f"Transcription complete: {len(text)} chars from {len(chunks)} chunks"
-        )
+        self.logger.info(f"Transcription complete: {len(text)} chars from {len(chunks)} chunks")
 
         return ExtractedContent(
             text=text,
@@ -167,4 +157,3 @@ class AudioExtractor(TextExtractor):
                 chunk_count=len(chunks),
             ),
         )
-

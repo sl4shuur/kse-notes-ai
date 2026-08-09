@@ -1,5 +1,8 @@
 from groq import AsyncGroq
+
 from notes_ai.interfaces.llm import LLMClient
+
+
 class GroqLLMClient(LLMClient):
     def __init__(
         self,
@@ -41,4 +44,3 @@ class GroqLLMClient(LLMClient):
         )
 
         return response.choices[0].message.content.strip()
-        

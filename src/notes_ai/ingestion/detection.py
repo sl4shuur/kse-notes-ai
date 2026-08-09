@@ -26,9 +26,7 @@ def is_valid_youtube_url(location: str) -> bool:
 def detect_source_type(location: str, logger: CustomLogger) -> SourceType:
     """Return the validated source type for a URL or local file."""
     if _is_url(location):
-        source_type = (
-            SourceType.YOUTUBE if is_valid_youtube_url(location) else SourceType.WEB
-        )
+        source_type = SourceType.YOUTUBE if is_valid_youtube_url(location) else SourceType.WEB
         logger.debug("Detected source type: %s", source_type.value)
         return source_type
 

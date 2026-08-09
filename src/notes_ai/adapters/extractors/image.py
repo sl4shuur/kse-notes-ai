@@ -1,14 +1,9 @@
-from notes_ai.models import ExtractedContent, ImageExtractionMetadata, Source
-
-from pathlib import Path
-from notes_ai.interfaces.extractor import TextExtractor
-
-from notes_ai.loggers import CustomLogger
-
-
 import base64
 from pathlib import Path
-from groq import Groq
+
+from notes_ai.interfaces.extractor import TextExtractor
+from notes_ai.loggers import CustomLogger
+from notes_ai.models import ExtractedContent, ImageExtractionMetadata, Source
 
 # https://console.groq.com/docs/models
 # meta-llama/llama-guard-4-12b
@@ -35,7 +30,7 @@ PROMPT = (
     "Math Syntax Rules:\n"
     "- Use standard KaTeX/LaTeX syntax only.\n"
     "- DO NOT invent custom commands like \\ecc, \\rad, \\diam, \\vol.\n"
-    "- For multi-letter function names or text inside math, ALWAYS use \\operatorname{...} or \\text{...}.\n"
+    "- For multi-letter function names or text inside math, ALWAYS use \\operatorname{...} or \\text{...}.\n"  # noqa: E501
     "  - BAD: \\ecc(u)\n"
     "  - GOOD: \\operatorname{ecc}(u) or \\text{ecc}(u)\n"
     "- For inline math use $...$.\n"
@@ -46,15 +41,12 @@ PROMPT = (
     "- If nothing is readable, return an empty string."
 )
 
-        
 
 class ImageExtractor(TextExtractor):
-
-
-
-    def __init__(self,llm, logger: CustomLogger):
-        self.logger= logger
+    def __init__(self, llm, logger: CustomLogger):
+        self.logger = logger
         self.llm = llm
+
     async def _run_ocr_completion(
         self,
         image_payloads: list[str],
@@ -65,11 +57,13 @@ class ImageExtractor(TextExtractor):
         result = await self.llm.complete(
             user_prompt=PROMPT,
             system_prompt=SYSTEM_PROMPT,
-            images=image_payloads,   # base64 strings; LLMClient builds the image_url blocks
+            images=image_payloads,  # base64 strings; LLMClient builds the image_url blocks
         )
-        return str(result)         
-        
-    def _build_batch_prompt(self, sources : list[Source], logger: CustomLogger, separator: str) -> list[dict]:
+        return str(result)
+
+    def _build_batch_prompt(
+        self, sources: list[Source], logger: CustomLogger, separator: str
+    ) -> list[dict]:
         messages = [
             {
                 "role": "system",
@@ -77,11 +71,10 @@ class ImageExtractor(TextExtractor):
             }
         ]
 
-
         # Build a combined prompt with explicit joining rules.
         combined_prompt = (
-            PROMPT
-            + "\n\nWhen multiple images are provided, process them in order and concatenate the extracted text. "
+            PROMPT + "\n\nWhen multiple images are provided, process them in order and "
+            "concatenate the extracted text. "
             "Insert exactly the following separator between images (no extra spaces or lines):\n"
             + separator
         )
@@ -109,21 +102,14 @@ class ImageExtractor(TextExtractor):
         )
         logger.debug(f"Batch prompt for multiple images constructed:\n{str(messages)}")
         return messages
-    
-
 
     def supports(self, source: Source) -> bool:
         source_type = source.input_type.lower()
-        return source_type  == "image"
-    
+        return source_type == "image"
 
-
-    def encode_image(self, source :Source):
+    def encode_image(self, source: Source):
         with open(source.location, "rb") as image_file:
-            return base64.b64encode(image_file.read()).decode('utf-8')
-
-
-
+            return base64.b64encode(image_file.read()).decode("utf-8")
 
     async def single_img2text(self, source: Source, logger: CustomLogger) -> ExtractedContent:
         image_path = source.location
@@ -144,7 +130,6 @@ class ImageExtractor(TextExtractor):
             text=ocr_text,
             metadata=ImageExtractionMetadata(image_count=1),
         )
-
 
     async def batch_img2text(
         self,
@@ -181,6 +166,7 @@ class ImageExtractor(TextExtractor):
             text=ocr_text,
             metadata=ImageExtractionMetadata(image_count=len(sources)),
         )
+
     async def extract(
         self,
         source: Source | list[Source],

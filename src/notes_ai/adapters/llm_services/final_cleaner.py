@@ -3,7 +3,13 @@ import re
 
 def normalize_smart_quotes(text: str) -> str:
     """Replace smart quotes with plain quotes."""
-    return text.replace("“", '"').replace("”", '"').replace("„", '"').replace("«", '"').replace("»", '"')
+    return (
+        text.replace("“", '"')
+        .replace("”", '"')
+        .replace("„", '"')
+        .replace("«", '"')
+        .replace("»", '"')
+    )
 
 
 def unwrap_backticked_math(text: str) -> str:
@@ -14,6 +20,7 @@ def unwrap_backticked_math(text: str) -> str:
 
 def trim_spaces_in_math(text: str) -> str:
     """Remove leading/trailing spaces inside $...$ blocks."""
+
     # Inline math: $ ... $ -> $...$
     def _trim(match: re.Match[str]) -> str:
         inner = match.group(1)
@@ -45,7 +52,8 @@ def clean_heading_colors(text: str) -> str:
     """
 
     pattern = re.compile(
-        r"^(#{1,6})\s+\$\\textcolor\{[^}]+\}\{\s*\\text\{([^}]*)\}\s*\}\$\s*$", re.MULTILINE)
+        r"^(#{1,6})\s+\$\\textcolor\{[^}]+\}\{\s*\\text\{([^}]*)\}\s*\}\$\s*$", re.MULTILINE
+    )
 
     def _strip(match: re.Match[str]) -> str:
         hashes = match.group(1)
@@ -59,7 +67,7 @@ def add_spaces_around_em_dashes(text: str) -> str:
     """
     Add spaces around "—" em dashes if missing.
     """
-    return re.sub(r'(?<!\s)—(?!\s)', ' — ', text)
+    return re.sub(r"(?<!\s)—(?!\s)", " — ", text)
 
 
 def remove_spammy_underscores(text: str) -> str:
@@ -67,7 +75,7 @@ def remove_spammy_underscores(text: str) -> str:
     Remove underscores that are likely spammy, e.g., in URLs or random sequences.
     """
     # Remove random sequences of underscores longer than 3
-    text = re.sub(r'_{3,}', '---', text)
+    text = re.sub(r"_{3,}", "---", text)
     return text
 
 

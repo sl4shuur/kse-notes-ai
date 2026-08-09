@@ -1,6 +1,6 @@
 """Validated domain models shared across Notes AI."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Annotated, Literal, Self
 
@@ -159,7 +159,5 @@ class Note(DomainModel):
     title: NonEmptyString
     content: NonEmptyString
     source: Source
-    date_created: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    date_created: datetime = Field(default_factory=lambda: datetime.now(UTC))
     metadata: NoteMetadata

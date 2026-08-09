@@ -1,6 +1,5 @@
 """Application settings and runtime preparation helpers."""
 
-import logging
 from functools import lru_cache
 from pathlib import Path
 from pprint import pprint
@@ -57,9 +56,11 @@ def _prepare_runtime(config: Config) -> None:
     for directory in config.directories:
         directory.mkdir(parents=True, exist_ok=True)
 
+
 @lru_cache
 def _setup_config() -> Config:
     return Config()
+
 
 @lru_cache
 def get_config() -> Config:

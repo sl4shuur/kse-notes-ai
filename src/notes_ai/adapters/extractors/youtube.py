@@ -1,24 +1,20 @@
-from notes_ai.interfaces.extractor import TextExtractor
-from notes_ai.models import ExtractedContent, Source, YouTubeExtractionMetadata
-
-
-import re
 import html
+import re
+from io import StringIO
 from pathlib import Path
 
-import yt_dlp
 import webvtt
+import yt_dlp
+from youtube_transcript_api import NoTranscriptFound, TranscriptsDisabled, YouTubeTranscriptApi
 
-from io import StringIO
-from time import sleep
-
-from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled, NoTranscriptFound
-from notes_ai.adapters.extractors.downloader import yt_dlp_download
 from notes_ai.adapters.extractors.audio import create_audio_chunks, transcribe_with_faster_whisper
+from notes_ai.adapters.extractors.downloader import yt_dlp_download
 from notes_ai.config import get_config
-from notes_ai.loggers import CustomLogger
 from notes_ai.interfaces.exceptions import ExtractionError
 from notes_ai.interfaces.extractor import TextExtractor
+from notes_ai.loggers import CustomLogger
+from notes_ai.models import ExtractedContent, Source, YouTubeExtractionMetadata
+
 
 class YouTubeExtractor(TextExtractor):
     def __init__(
@@ -28,10 +24,10 @@ class YouTubeExtractor(TextExtractor):
     ):
         self.logger = logger
         self.temp_audio_dir = Path(temp_audio_dir or get_config().temp_audio_dir)
+
     def supports(self, source: Source) -> bool:
         return source.input_type == "youtube"
 
-    
     def _strip_vtt_markup_preserve_text(self, line: str) -> str:
         """Remove WebVTT inline timing/markup while preserving human text and punctuation."""
         t = line
@@ -48,15 +44,13 @@ class YouTubeExtractor(TextExtractor):
         t = re.sub(r"\s+", " ", t).strip()
         return t
 
-
     def _normalize_for_duplicate_check(self, line: str) -> str:
-        """Normalize line for duplicate detection: lowercase, remove punctuation, collapse spaces."""
+        """Normalize case, punctuation, and spaces for duplicate detection."""
         t = line.lower()
         # Remove punctuation but keep letters/numbers/spaces (Latin+Cyrillic friendly)
         t = re.sub(r"[^0-9a-zа-яё\s]", " ", t, flags=re.IGNORECASE)
         t = re.sub(r"\s+", " ", t).strip()
         return t
-
 
     def _normalize_whitespace(self, text: str, keep_newlines: bool = True) -> str:
         """Decode HTML entities, replace NBSPs with regular spaces, collapse spaces."""
@@ -65,16 +59,16 @@ class YouTubeExtractor(TextExtractor):
 
         # 2) Replace various Unicode whitespace characters with regular spaces
         t = (
-            t.replace("\u00A0", " ")   # NO-BREAK SPACE
-            .replace("\u202F", " ")   # NARROW NO-BREAK SPACE
-            .replace("\u2009", " ")   # THIN SPACE
-            .replace("\u200A", " ")   # HAIR SPACE
-            .replace("\u2007", " ")   # FIGURE SPACE
-            .replace("\u2008", " ")   # PUNCTUATION SPACE
-            .replace("\ufeff", "")    # ZERO WIDTH NO-BREAK SPACE (BOM)
-            .replace("\u200B", "")    # ZERO WIDTH SPACE
-            .replace("\u200C", "")    # ZERO WIDTH NON-JOINER
-            .replace("\u200D", "")    # ZERO WIDTH JOINER
+            t.replace("\u00a0", " ")  # NO-BREAK SPACE
+            .replace("\u202f", " ")  # NARROW NO-BREAK SPACE
+            .replace("\u2009", " ")  # THIN SPACE
+            .replace("\u200a", " ")  # HAIR SPACE
+            .replace("\u2007", " ")  # FIGURE SPACE
+            .replace("\u2008", " ")  # PUNCTUATION SPACE
+            .replace("\ufeff", "")  # ZERO WIDTH NO-BREAK SPACE (BOM)
+            .replace("\u200b", "")  # ZERO WIDTH SPACE
+            .replace("\u200c", "")  # ZERO WIDTH NON-JOINER
+            .replace("\u200d", "")  # ZERO WIDTH JOINER
         )
 
         # 3) Remove other control characters except newlines/tabs (if keeping newlines)
@@ -98,7 +92,6 @@ class YouTubeExtractor(TextExtractor):
             t = re.sub(r"\s+", " ", t).strip()
 
         return t
-
 
     def _clean_vtt_transcript(self, vtt_content: str) -> str:
         """Parse VTT, strip markup, preserve punctuation, and collapse consecutive duplicates."""
@@ -133,12 +126,11 @@ class YouTubeExtractor(TextExtractor):
         text = self._normalize_whitespace(text, keep_newlines=True)
         return text
 
-
     def _get_yt_lang(self, url: str, logger: CustomLogger) -> str | None:
         """Extract the language code from a YouTube URL if present."""
         info_opt = {
-            'quiet': True,
-            'skip_download': True,  # IMPORTANT: we need only metadata
+            "quiet": True,
+            "skip_download": True,  # IMPORTANT: we need only metadata
         }
 
         logger.debug(f"Extracting video info for language detection from URL: {url}")
@@ -147,8 +139,8 @@ class YouTubeExtractor(TextExtractor):
         try:
             with yt_dlp.YoutubeDL(info_opt) as ydl:  # type: ignore
                 info_dict = ydl.extract_info(url, download=False)
-                manual_subs = info_dict.get('subtitles', {}) # subtitles added by video owner
-                auto_subs = info_dict.get('automatic_captions', {}) # auto-generated subtitles
+                manual_subs = info_dict.get("subtitles", {})  # subtitles added by video owner
+                auto_subs = info_dict.get("automatic_captions", {})  # auto-generated subtitles
 
                 if manual_subs:
                     # pick the first manual subtitle language (often it is the first)
@@ -165,7 +157,6 @@ class YouTubeExtractor(TextExtractor):
             logger.error(f"Error extracting video info for language detection: {e}")
             return None
 
-
     def _get_video_id_from_url(self, url: str) -> str:
         """Extract the YouTube video ID from a URL."""
         # Patterns to match various YouTube URL formats
@@ -180,7 +171,7 @@ class YouTubeExtractor(TextExtractor):
                 return match.group(1)
         raise ExtractionError("Invalid YouTube URL: Unable to extract video ID.")
 
-    def get_yt_transcript(self,source: Source, logger: CustomLogger) -> ExtractedContent | None:
+    def get_yt_transcript(self, source: Source, logger: CustomLogger) -> ExtractedContent | None:
         """
         Download YouTube subtitles.
 
@@ -189,7 +180,8 @@ class YouTubeExtractor(TextExtractor):
             logger (CustomLogger): Logger instance for logging.
 
         Returns:
-            tuple[str, str] | None: A tuple containing the transcript text and language code, or None if not available.
+            Extracted content with transcript text and language code, or None
+            when no transcript is available.
         """
         url = source.location
         ytt_api = YouTubeTranscriptApi()
@@ -206,21 +198,23 @@ class YouTubeExtractor(TextExtractor):
             # 3. Try to find a suitable transcript
             try:
                 # Prefer manually created transcripts
-                transcript = transcript_list.find_manually_created_transcript(
-                    ["en", "uk", "ru"]
-                )
+                transcript = transcript_list.find_manually_created_transcript(["en", "uk", "ru"])
                 logger.debug("Using manually created transcript.")
 
             except NoTranscriptFound:
                 transcript = next(iter(transcript_list))
-            
-            logger.debug(f"Found transcript! Language: {transcript.language_code}. Auto-generated: {transcript.is_generated}")
+
+            logger.debug(
+                "Found transcript! Language: %s. Auto-generated: %s",
+                transcript.language_code,
+                transcript.is_generated,
+            )
 
             # 4. Fetch the transcript data
             transcript_data = transcript.fetch()
 
             # 5. Convert to single string
-            # transcript_data now is a list of FetchedTranscriptSnippet objects with 'text', 'start', 'duration' attributes
+            # Each item contains text, start, and duration attributes.
             full_text = " ".join(item.text for item in transcript_data)
 
             return ExtractedContent(
@@ -239,10 +233,6 @@ class YouTubeExtractor(TextExtractor):
             logger.error(f"Error downloading YouTube transcript: {e}")
             return None
 
-
-    
-
-
     async def extract(
         self,
         source: Source,
@@ -254,7 +244,7 @@ class YouTubeExtractor(TextExtractor):
 
         Args:
             yt_url (str): The YouTube video URL.
-            chunk_duration_ms (int, optional): Duration of each audio chunk in milliseconds. Defaults to 10 minutes.
+            chunk_duration_ms (int, optional): Duration of each audio chunk in milliseconds.
 
         Returns:
             str: The full transcription of the YouTube video.
@@ -265,20 +255,20 @@ class YouTubeExtractor(TextExtractor):
         logger.info(f"Starting transcription for YouTube URL: {yt_url}")
         # 1. Attempt to get the transcript directly (if force_whisper is False)
         if not force_whisper:
-            result =  self.get_yt_transcript(source, logger)
-            if result and type(result.metadata) == YouTubeExtractionMetadata:
+            result = self.get_yt_transcript(source, logger)
+            if result and isinstance(result.metadata, YouTubeExtractionMetadata):
                 logger.info(
                     "Transcript extracted via YT subtitles. Language: %s",
                     result.metadata.language_code,
                 )
                 return result
         # If transcript extraction fails, download the audio
-        audio_file = yt_dlp_download(
-            yt_url, logger=logger, output_dir=self.temp_audio_dir)
+        audio_file = yt_dlp_download(yt_url, logger=logger, output_dir=self.temp_audio_dir)
         logger.debug(f"Downloaded audio file: {audio_file}")
 
         chunks = create_audio_chunks(
-            audio_file, chunk_duration_ms, temp_dir=self.temp_audio_dir, logger=logger)
+            audio_file, chunk_duration_ms, temp_dir=self.temp_audio_dir, logger=logger
+        )
         logger.debug(f"Created {len(chunks)} audio chunks.")
 
         transcription = transcribe_with_faster_whisper(chunks, logger)

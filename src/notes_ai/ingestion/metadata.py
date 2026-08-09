@@ -95,8 +95,7 @@ def _extract_audio_metadata(location: str) -> AudioMetadata:
         return AudioMetadata(title=_fallback_title(location))
 
     tags = tuple(
-        AudioTag(name=str(name), value=str(value))
-        for name, value in (audio.tags or {}).items()
+        AudioTag(name=str(name), value=str(value)) for name, value in (audio.tags or {}).items()
     )
     return AudioMetadata(
         title=_fallback_title(location),

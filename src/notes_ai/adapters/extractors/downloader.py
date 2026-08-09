@@ -1,9 +1,12 @@
 from pathlib import Path
 from typing import Literal
+
 import yt_dlp
 from yt_dlp.utils import DownloadError
-from notes_ai.loggers import CustomLogger
+
 from notes_ai.interfaces.exceptions import ExtractionError
+from notes_ai.loggers import CustomLogger
+
 DownloadType = Literal["audio", "video"]
 AudioFormat = Literal["mp3", "m4a", "wav", "opus"]
 AudioQuality = Literal["128", "192", "256", "320"]
@@ -26,17 +29,20 @@ def _build_ydl_opts(
         "restrictfilenames": True,
     }
     if player_client:
-        base["extractor_args"] = {"youtube": {
-            "player_client": [player_client]}}
+        base["extractor_args"] = {"youtube": {"player_client": [player_client]}}
 
     if download_type == "audio":
         # without FFMPEG re-encoding, some formats may not respect the quality setting
         base.update(
             {
                 "format": f"bestaudio[ext={audio_format}]/bestaudio/best",
-                "postprocessors": [{"key": "FFmpegExtractAudio",
-                    "preferredcodec": audio_format,
-                    "preferredquality": audio_quality}],
+                "postprocessors": [
+                    {
+                        "key": "FFmpegExtractAudio",
+                        "preferredcodec": audio_format,
+                        "preferredquality": audio_quality,
+                    }
+                ],
             }
         )
     else:  # video
@@ -105,19 +111,17 @@ def yt_dlp_download(
         ydl_opts = _build_ydl_opts(
             download_type, audio_format, audio_quality, outtmpl, player_client=client
         )
-        logger.debug(
-            f"yt-dlp: client={client}, type={download_type}, out='{outtmpl}'"
-        )
+        logger.debug(f"yt-dlp: client={client}, type={download_type}, out='{outtmpl}'")
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # type: ignore
                 result = ydl.extract_info(yt_url, download=True)
                 final_path = _get_final_path(
-                    result, ydl, download_type, audio_format, output_dir, name)  # type: ignore
+                    result, ydl, download_type, audio_format, output_dir, name
+                )  # type: ignore
                 if final_path.exists():
                     logger.debug(f"yt-dlp: saved to {final_path}")
                     return final_path
-                raise FileNotFoundError(
-                    f"Expected output file not found: {final_path}")
+                raise FileNotFoundError(f"Expected output file not found: {final_path}")
         except DownloadError as e:
             last_error = e
             logger.warning(f"yt-dlp client '{client}' failed: {e}")

@@ -5,7 +5,6 @@ from notes_ai.interfaces.llm import LLMClient
 from notes_ai.loggers import CustomLogger
 from notes_ai.models import ExtractedContent, Note, NoteMetadata, Source
 
-
 SYSTEM_PROMPT = r"""<system>
 <role>
 You are an expert educational note writer. Turn source material into one complete,

@@ -3,9 +3,10 @@ from pathlib import Path
 from typing import Literal
 
 import fitz  # PyMuPDF library
+
 from notes_ai.interfaces.extractor import TextExtractor
-from notes_ai.models import ExtractedContent, PdfExtractionMetadata, Source
 from notes_ai.loggers import CustomLogger
+from notes_ai.models import ExtractedContent, PdfExtractionMetadata, Source
 
 
 def _extract_text_from_page(page: fitz.Page) -> str:
@@ -56,10 +57,10 @@ def _extract_pages_as_dict(pdf_path: str | Path, logger: CustomLogger) -> dict[i
 
 
 def single_pdf2text(
-        pdf_path: str | Path,
-        logger: CustomLogger,
-        output_format: Literal["text", "json"] = "text",
-        separator: str = "\n\n--- Page Break ---\n\n"
+    pdf_path: str | Path,
+    logger: CustomLogger,
+    output_format: Literal["text", "json"] = "text",
+    separator: str = "\n\n--- Page Break ---\n\n",
 ) -> str:
     """
     Extract text from PDF and return as plain text or JSON string.
@@ -87,11 +88,11 @@ def single_pdf2text(
 
 
 def save_pdf_text(
-        pdf_path: str | Path,
-        output_path: str | Path,
-        logger: CustomLogger,
-        output_format: Literal["text", "json"] = "text",
-        separator: str = "\n\n--- Page Break ---\n\n"
+    pdf_path: str | Path,
+    output_path: str | Path,
+    logger: CustomLogger,
+    output_format: Literal["text", "json"] = "text",
+    separator: str = "\n\n--- Page Break ---\n\n",
 ) -> str | Path:
     """
     Extract text from PDF and save to file.
@@ -114,7 +115,6 @@ def save_pdf_text(
     output_path.write_text(text, encoding="utf-8")
     logger.success(f"Saved extracted text to: {output_path}")
     return output_path
-
 
 
 class PDFExtractor(TextExtractor):
