@@ -42,11 +42,37 @@ dependencies = [
     "mutagen>=1.47"
 ]
 
+# uv run --group test python -m pytest
 [dependency-groups]
+test = [
+    "ruff==0.8.0",
+    "pytest==8.2",
+    "pytest-asyncio==0.24",
+]
+
 dev = [
     "pylint>=4.0.6",
     "pytest>=8.0.0",
 ]
+
+# uv run --group test ruff check .
+# uv run --group test ruff format .
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+exclude = [
+    "*.ipynb",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "C4"]
+
+[tool.ruff.lint.per-file-ignores]
+# "src/api/**/*.py" = ["B008"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
 
 [build-system]
 requires = ["hatchling"]
