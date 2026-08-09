@@ -99,11 +99,11 @@ uv run --group test python -m pytest -q
 **Kickoff:** 27 July 2026  
 **Demo:** 16 August 2026
 
-| Phase | Focus | Midweek check-in | Deadline |
-| --- | --- | --- | --- |
-| 1 | Refactor and package foundation | 29 July | 2 August |
-| 2 | Multi-step synthesis and web application | 5 August | 9 August |
-| 3 | Knowledge base, containers, observability, and demo | 12 August | 16 August |
+| Phase | Focus                                               | Midweek check-in | Deadline  |
+| ----- | --------------------------------------------------- | ---------------- | --------- |
+| 1     | Refactor and package foundation                     | 29 July          | 2 August  |
+| 2     | Multi-step synthesis and web application            | 5 August         | 9 August  |
+| 3     | Knowledge base, containers, observability, and demo | 12 August        | 16 August |
 
 The implementation should progress from a simple working version to a clean extensible version. LangGraph or another agent framework is intentionally out of scope unless the plain-class pipeline becomes insufficient.
 
@@ -353,12 +353,15 @@ This guide provides full documentation on using the `notes-ai` Command-Line Inte
 ```bash
 uv run python -m notes_ai.cli --help
 ```
-*or via the installed package entry point:*
+
+_or via the installed package entry point:_
+
 ```bash
 uv run notes-ai --help
 ```
 
 ##### Global Help Output
+
 ```text
 Usage: python -m notes_ai.cli [OPTIONS] SOURCE...
 
@@ -376,50 +379,58 @@ Options:
 ##### Command Reference
 
 ###### Synopsis
+
 ```bash
 uv run python -m notes_ai.cli <SOURCES...> [OPTIONS]
 ```
 
 ###### Positional Arguments
-| Argument | Type | Nargs | Description |
-| :--- | :--- | :---: | :--- |
+
+| Argument  | Type  |      Nargs      | Description                                                                            |
+| :-------- | :---- | :-------------: | :------------------------------------------------------------------------------------- |
 | `sources` | `str` | `+` (1 or more) | One or more YouTube URLs, Web URLs, or local file paths (`.pdf`, `.png`, `.mp3`, etc.) |
 
 ###### Options & Flags
-| Option / Flag | Short | Type | Default | Description |
-| :--- | :---: | :--- | :--- | :--- |
-| `--output-dir` | `-o` | `str` | `output` | Directory where generated `.md` note files will be saved |
-| `--name` | `-n` | `str` | `None` | Custom note filename (without extension). Only valid for single-source runs |
-| `--verbose` | `-v` | flag | `False` | Enables `DEBUG` level log output in terminal |
-| `--help` | `-h` | flag | — | Displays the global help screen and exits |
+
+| Option / Flag  | Short | Type  | Default  | Description                                                                 |
+| :------------- | :---: | :---- | :------- | :-------------------------------------------------------------------------- |
+| `--output-dir` | `-o`  | `str` | `output` | Directory where generated `.md` note files will be saved                    |
+| `--name`       | `-n`  | `str` | `None`   | Custom note filename (without extension). Only valid for single-source runs |
+| `--verbose`    | `-v`  | flag  | `False`  | Enables `DEBUG` level log output in terminal                                |
+| `--help`       | `-h`  | flag  | —        | Displays the global help screen and exits                                   |
 
 ##### Supported Source Formats
 
-| Format | Category | File Extension / Pattern | Extractor Adapter |
-| :--- | :--- | :--- | :--- |
-| **YouTube** | Video URL | `youtube.com/watch?v=...`, `youtu.be/...` | `YouTubeExtractor` |
-| **Web Pages** | Article URL | `http://...`, `https://...` | `WebExtractor` |
-| **PDF** | Document | `.pdf` | `PDFExtractor` |
-| **Image (OCR)** | Image | `.jpg`, `.jpeg`, `.png`, `.bmp`, `.webp` | `ImageExtractor` |
-| **Audio** | Audio | `.mp3`, `.wav`, `.m4a`, `.opus`, `.flac`, `.aac` | `AudioExtractor` |
+| Format          | Category    | File Extension / Pattern                         | Extractor Adapter  |
+| :-------------- | :---------- | :----------------------------------------------- | :----------------- |
+| **YouTube**     | Video URL   | `youtube.com/watch?v=...`, `youtu.be/...`        | `YouTubeExtractor` |
+| **Web Pages**   | Article URL | `http://...`, `https://...`                      | `WebExtractor`     |
+| **PDF**         | Document    | `.pdf`                                           | `PDFExtractor`     |
+| **Image (OCR)** | Image       | `.jpg`, `.jpeg`, `.png`, `.bmp`, `.webp`         | `ImageExtractor`   |
+| **Audio**       | Audio       | `.mp3`, `.wav`, `.m4a`, `.opus`, `.flac`, `.aac` | `AudioExtractor`   |
 
 ##### Examples
 
 ###### 1. Single Source Processing
 
 **YouTube Video:**
+
 ```bash
 uv run python -m notes_ai.cli "https://www.youtube.com/watch?v=Z6z_feacXW8"
 ```
-*Saves output to `./output/note_1.md`*
+
+_Saves output to `./output/note_1.md`_
 
 **PDF Document with Custom Name & Output Directory:**
+
 ```bash
 uv run python -m notes_ai.cli "/path/to/report.pdf" -o my_notes -n "Elections_Analysis"
 ```
-*Saves output to `./my_notes/Elections_Analysis.md`*
+
+_Saves output to `./my_notes/Elections_Analysis.md`_
 
 **Image File with Verbose Logging:**
+
 ```bash
 uv run python -m notes_ai.cli "/path/to/diagram.png" -v
 ```
@@ -432,10 +443,11 @@ You can pass multiple files or URLs at once in a single command:
 uv run python -m notes_ai.cli "https://youtu.be/Z6z_feacXW8" "report.pdf" "lecture.mp3" -o batch_output
 ```
 
-*Processes each source sequentially and creates:*
-* `./batch_output/note_1.md`
-* `./batch_output/report.md`
-* `./batch_output/lecture.md`
+_Processes each source sequentially and creates:_
+
+- `./batch_output/note_1.md`
+- `./batch_output/report.md`
+- `./batch_output/lecture.md`
 
 ##### Environment Setup
 
@@ -556,11 +568,11 @@ Tasks:
 
 Create containers for at least:
 
-| Service | Responsibility |
-| --- | --- |
-| `api` | FastAPI backend and note pipeline |
-| `web` | React production build |
-| `phoenix` | tracing and LLM observability |
+| Service   | Responsibility                    |
+| --------- | --------------------------------- |
+| `api`     | FastAPI backend and note pipeline |
+| `web`     | React production build            |
+| `phoenix` | tracing and LLM observability     |
 
 Optional: run ChromaDB as a separate service when this simplifies persistence or inspection.
 
@@ -713,5 +725,3 @@ Ruff and pytest are maintained in the `test` dependency group; the same commands
 ## License
 
 This project is intended for learning, experimentation, and demonstrations. Add an explicit license file before public reuse or distribution. Keep all credentials in environment variables and never commit real API keys.
-
-
