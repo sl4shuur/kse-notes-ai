@@ -42,6 +42,10 @@ class Config(BaseSettings):
         default="",
         validation_alias=AliasChoices("GROQ_API_KEY", "APP_GROQ_API_KEY"),
     )
+    phoenix_api_key: str = Field(
+            default="",
+            validation_alias=AliasChoices("PHOENIX_API_KEY", "APP_PHOENIX_API_KEY"),
+        )
 
 
 def _prepare_runtime(config: Config) -> None:
