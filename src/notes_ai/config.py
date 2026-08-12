@@ -46,6 +46,10 @@ class Config(BaseSettings):
             default="",
             validation_alias=AliasChoices("PHOENIX_API_KEY", "APP_PHOENIX_API_KEY"),
         )
+    phoenix_endpoint: str = Field(
+                default="",
+                validation_alias=AliasChoices("PHOENIX_ENDPOINT_URL", "APP_PHOENIX_ENDPOINT_URL"),
+            )
 
 
 def _prepare_runtime(config: Config) -> None:
