@@ -42,10 +42,6 @@ class Config(BaseSettings):
         default="",
         validation_alias=AliasChoices("GROQ_API_KEY", "APP_GROQ_API_KEY"),
     )
-    phoenix_api_key: str = Field(
-            default="",
-            validation_alias=AliasChoices("PHOENIX_API_KEY", "APP_PHOENIX_API_KEY"),
-        )
     phoenix_endpoint: str = Field(
                 default="",
                 validation_alias=AliasChoices("PHOENIX_ENDPOINT_URL", "APP_PHOENIX_ENDPOINT_URL"),

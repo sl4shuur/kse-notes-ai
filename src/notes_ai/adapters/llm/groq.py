@@ -7,20 +7,16 @@ class GroqLLMClient(LLMClient):
     def __init__(
         self,
         api_key: str,
-        phoenix_api_key: str | None,
         phoenix_endpoint:  str | None,
         model: str = "openai/gpt-oss-20b",
         tracing = True
-    
     ):
         self.client = AsyncGroq(api_key=api_key)
         self.model = model
         if tracing:
-            self.phoenix_api_key = phoenix_api_key
             self._tracer_provider = register(
                 project_name="Notes-AI",
                 endpoint=phoenix_endpoint,
-                headers={"authorization": f"Bearer {phoenix_api_key}"},
                 batch=True,
                 set_global_tracer_provider=False,
                 )        

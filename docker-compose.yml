@@ -7,3 +7,19 @@ services:
       - .env
     stdin_open: true
     tty: true
+    # docker-compose.yml
+
+  phoenix:
+    image: arizephoenix/phoenix:latest  # must be >= 4.0
+    ports:
+      - "6006:6006"   # UI / OTLP HTTP
+      - "4317:4317"   # OTLP gRPC
+      - "9090:9090"   # optional: Prometheus metrics
+    environment:
+      - PHOENIX_WORKING_DIR=/mnt/data
+    volumes:
+      - phoenix_data:/mnt/data
+
+volumes:
+  phoenix_data:
+    driver: local

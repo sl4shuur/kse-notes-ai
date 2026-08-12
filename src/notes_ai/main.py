@@ -52,12 +52,10 @@ async def generate_notes(
 
     if not config.groq_api_key:
         raise ConfigurationError("GROQ_API_KEY is not set. Add it to the environment or .env file.")
-    if tracing and not config.phoenix_api_key:
-        raise ConfigurationError("PHOENIX_API_KEY is not set. Add it to the environment or .env file.")
     if tracing and not config.phoenix_endpoint:
             raise ConfigurationError("PHOENIX_ENDPOINT_URL is not set. Add it to the environment or .env file.")
     
-    llm = GroqLLMClient(api_key=config.groq_api_key, phoenix_api_key=config.phoenix_api_key, phoenix_endpoint= config.phoenix_endpoint, tracing= tracing )
+    llm = GroqLLMClient(api_key=config.groq_api_key, phoenix_endpoint= config.phoenix_endpoint, tracing= tracing )
 
     generator = NoteGenerator(llm, logger)
     store = MarkdownNoteStore(output_dir=output_dir)
