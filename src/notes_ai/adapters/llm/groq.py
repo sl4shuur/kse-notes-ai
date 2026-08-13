@@ -7,7 +7,6 @@ class GroqLLMClient(LLMClient):
     def __init__(
         self,
         api_key: str,
-        phoenix_endpoint:  str | None,
         model: str = "openai/gpt-oss-20b",
         tracing = True
     ):
@@ -16,7 +15,7 @@ class GroqLLMClient(LLMClient):
         if tracing:
             self._tracer_provider = register(
                 project_name="Notes-AI",
-                endpoint=phoenix_endpoint,
+                endpoint="http://localhost:6006/v1/traces",
                 batch=True,
                 set_global_tracer_provider=False,
                 )        
