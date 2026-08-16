@@ -39,7 +39,12 @@ dependencies = [
     "seaborn>=0.13.2",
     "scikit-learn>=1.8.0",
     # for audio
-    "mutagen>=1.47"
+    "mutagen>=1.47",
+    #for phoenix
+    "openinference-instrumentation-groq>=0.1.16",
+    "groq",
+    "arize-phoenix-otel",
+    "arize-phoenix>=20.0.0",
 ]
 
 # uv run --group test python -m pytest

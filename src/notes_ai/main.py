@@ -42,7 +42,8 @@ async def generate_notes(
     output_dir: str | Path = "output",
     name: str | None = None,
     verbose: bool = False,
-) -> list[Note]:
+    tracing = True
+    ) -> list[Note]:
     """Generate notes for sources using the configured application adapters."""
     config = get_config()
     logger = CustomLogger(config.app_name)
@@ -52,7 +53,9 @@ async def generate_notes(
     if not config.groq_api_key:
         raise ConfigurationError("GROQ_API_KEY is not set. Add it to the environment or .env file.")
 
-    llm = GroqLLMClient(api_key=config.groq_api_key)
+    
+    llm = GroqLLMClient(api_key=config.groq_api_key, tracing= tracing )
+
     generator = NoteGenerator(llm, logger)
     store = MarkdownNoteStore(output_dir=output_dir)
     extractors = [
@@ -100,6 +103,7 @@ def run(
     output_dir: str | Path = "output",
     name: str | None = None,
     verbose: bool = False,
+    tracing = True
 ) -> list[Note]:
     """Run the asynchronous application workflow from synchronous callers."""
     return asyncio.run(
@@ -108,5 +112,6 @@ def run(
             output_dir=output_dir,
             name=name,
             verbose=verbose,
+            tracing = tracing
         )
     )

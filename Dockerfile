@@ -8,12 +8,12 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
 
-COPY pyproject.toml uv.lock ./
+COPY pyproject.toml uv.lock  README.md ./
 RUN uv sync --frozen --no-install-project
-
+COPY src/ ./src/
 RUN uv run playwright install --with-deps chromium
 
-COPY src/ ./src/
+
 RUN uv sync --frozen
 
 ENTRYPOINT ["uv", "run", "python", "-m", "notes_ai.main"]
