@@ -13,10 +13,15 @@ async def create_note(
     store: NoteStore,
 ) -> Note:
     """Extract, generate, and persist a note."""
+    from pathlib import Path
+
+    from notes_ai.adapters.storage.json_store import JsonNoteStore
+    
     pipeline = SequentialSynthesisPipeline([
         ExtractionStep(extractors),
         GenerationStep(generator),
         PersistenceStep(store),
+        PersistenceStep(JsonNoteStore(base_dir=Path("data/note_data"))),
     ])
     ctx = await pipeline.run(NoteContext(source=source))
     assert ctx.note is not None
