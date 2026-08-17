@@ -14,7 +14,7 @@ from notes_ai.adapters.extractors import (
 )
 from notes_ai.adapters.llm import GroqLLMClient
 from notes_ai.adapters.llm_services import NoteGenerator
-from notes_ai.adapters.storage import MarkdownNoteStore
+from notes_ai.adapters.storage.markdown import MarkdownNoteStore
 from notes_ai.config import get_config
 from notes_ai.ingestion import create_source
 from notes_ai.interfaces.exceptions import ConfigurationError
