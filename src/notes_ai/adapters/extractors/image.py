@@ -4,6 +4,7 @@ from pathlib import Path
 from notes_ai.interfaces import TextExtractor
 from notes_ai.loggers import CustomLogger
 from notes_ai.models import ExtractedContent, ImageExtractionMetadata, Source
+from notes_ai.prompts import IMAGE_OCR_BATCH_SUFFIX, IMAGE_OCR_SYSTEM_PROMPT, IMAGE_OCR_USER_PROMPT
 
 # https://console.groq.com/docs/models
 # meta-llama/llama-guard-4-12b
@@ -12,34 +13,8 @@ from notes_ai.models import ExtractedContent, ImageExtractionMetadata, Source
 
 
 OCR_MODEL = "qwen/qwen3.6-27b"
-SYSTEM_PROMPT = (
-    "You are an OCR assistant. Follow the user's rules exactly. "
-    "Return only the text present in the image."
-)
-
-# TODO: rewrite using XML format
-PROMPT = (
-    "Extract only the literal text visible in the image.\n"
-    "\n"
-    "Strict rules:\n"
-    "- Output plain text only.\n"
-    "- Do not describe, summarize, or explain anything.\n"
-    "- Do not add headings, labels, comments, or metadata.\n"
-    "- Preserve line breaks and reading order.\n"
-    "\n"
-    "Math Syntax Rules:\n"
-    "- Use standard KaTeX/LaTeX syntax only.\n"
-    "- DO NOT invent custom commands like \\ecc, \\rad, \\diam, \\vol.\n"
-    "- For multi-letter function names or text inside math, ALWAYS use \\operatorname{...} or \\text{...}.\n"  # noqa: E501
-    "  - BAD: \\ecc(u)\n"
-    "  - GOOD: \\operatorname{ecc}(u) or \\text{ecc}(u)\n"
-    "- For inline math use $...$.\n"
-    "- For centered/display equations use:\n"
-    "  $$\n"
-    "  ...\n"
-    "  $$\n"
-    "- If nothing is readable, return an empty string."
-)
+SYSTEM_PROMPT = IMAGE_OCR_SYSTEM_PROMPT
+PROMPT = IMAGE_OCR_USER_PROMPT
 
 
 class ImageExtractor(TextExtractor):
@@ -72,12 +47,7 @@ class ImageExtractor(TextExtractor):
         ]
 
         # Build a combined prompt with explicit joining rules.
-        combined_prompt = (
-            PROMPT + "\n\nWhen multiple images are provided, process them in order and "
-            "concatenate the extracted text. "
-            "Insert exactly the following separator between images (no extra spaces or lines):\n"
-            + separator
-        )
+        combined_prompt = PROMPT + "\n\n" + IMAGE_OCR_BATCH_SUFFIX + separator
         # Build a single user message: PROMPT + all images
         user_content: list[dict] = [{"type": "text", "text": combined_prompt}]
 

@@ -1,10 +1,9 @@
 """High-level note creation orchestration."""
 
 from collections.abc import Sequence
-
-from notes_ai.ingestion import extract_content
 from notes_ai.interfaces import NoteGenerationService, NoteStore, TextExtractor
 from notes_ai.models import Note, Source
+from notes_ai.synthesis import ExtractionStep, GenerationStep, NoteContext, PersistenceStep, SequentialSynthesisPipeline
 
 
 async def create_note(
@@ -14,7 +13,12 @@ async def create_note(
     store: NoteStore,
 ) -> Note:
     """Extract, generate, and persist a note."""
-    content = await extract_content(source, extractors)
-    note = await generator.generate(source, content)
-    await store.save(note)
-    return note
+    pipeline = SequentialSynthesisPipeline([
+        ExtractionStep(extractors),
+        GenerationStep(generator),
+        PersistenceStep(store),
+    ])
+    ctx = await pipeline.run(NoteContext(source=source))
+    assert ctx.note is not None
+    return ctx.note
+
