@@ -18,7 +18,8 @@ class JsonNoteStore(NoteStore):
 
     async def save(self, note: Note) -> None:
         note_id = str(uuid4())
-        file_path = self.base_dir / f"{note_id}.json"
-        json_data = note.model_dump_json(indent=2)
-        file_path.write_text(json_data, encoding="utf-8")
+        file_path = self.base_dir / f"{note.title}.json"
+        json_data = json.loads(note.model_dump_json())
+        json_data["note_id"] = note_id
+        file_path.write_text(json.dumps(json_data,indent = 2), encoding="utf-8")
         logger.info("Saved note to %s", file_path)
