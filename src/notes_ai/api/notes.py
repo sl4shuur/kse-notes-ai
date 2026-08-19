@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Query, Response, status
-
+from notes_ai.api.tags import post_tag
 from notes_ai.adapters.storage.json_store import JsonNoteStore
 from notes_ai.models import Note
 
@@ -34,6 +34,8 @@ async def list_notes(
         for fname in os.listdir(METADATA_PATH):
             file_path = Path(METADATA_PATH) / fname
             if file_path.suffix != ".json":
+                continue
+            if file_path.stem[0] == "_":
                 continue
 
             data = json.loads(file_path.read_text(encoding="utf-8"))
@@ -76,13 +78,17 @@ async def post_note(note: Note):
 
 
 @app.put("/notes/{note_id}")
-async def put_note(note_id: str, note: Note):
+async def put_note(note_id: str, note: Note, status, tags):
     file_path = _note_path(note_id)
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Note not found")
     try:
-        file_path.write_text(note.model_dump_json(indent=2), encoding="utf-8")
-        return note
+        data = json.load(note.model_dump_json())
+        data["status"] = status
+        data["tags"] = tags
+        json_data= json.dumps(data, indent = 2)
+        file_path.write_text(json_data, encoding="utf-8")
+        return json_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -92,7 +98,7 @@ async def patch_note(
     note_id: str,
     content: str | None = None,
     status: str | None = None,
-    tags: str | list[str] | None = None,
+    tags: str | list[str] | None = [],
     title: str | None = None,
 ):
     file_path = _note_path(note_id)
@@ -112,7 +118,15 @@ async def patch_note(
             existing = note_data.get("tags", [])
             new_tags = tags if isinstance(tags, list) else [tags]
             note_data["tags"] = existing + [t for t in new_tags if t not in existing]
+            data = json.load(METADATA_PATH + "/_tags.json")
+            for t in [t for t in new_tags if t not in existing]:
+                if t not in data:
+                    data[t] = 1
+                else:
+                    data[t] += 1
+            Path(METADATA_PATH + "/_tags.json").write_text(json.dumps(data, indent = 2))            
 
+                
         note_data["date_modified"] = datetime.now(timezone.utc).isoformat()
 
         file_path.write_text(json.dumps(note_data, indent=2), encoding="utf-8")
