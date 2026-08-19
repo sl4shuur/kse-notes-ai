@@ -1,25 +1,44 @@
 """Notes API endpoints."""
-"""Notes API endpoints."""
 import json
 import os
 from datetime import datetime, timezone
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Query, Response, status
-from notes_ai.api.tags import post_tag
+from fastapi import FastAPI, HTTPException, Query, Response
+from fastapi import status as http_status
+
+from notes_ai.api.tags import load_tags, save_tags
 from notes_ai.adapters.storage.json_store import JsonNoteStore
 from notes_ai.models import Note
 
 app = FastAPI()
 
 current_path = os.path.abspath(__file__)
-BASE_DIR = current_path[: -len("/api/sources.py")]
+BASE_DIR = current_path[: -len("/api/notes.py")]
 OUTPUT_PATH = os.path.join(BASE_DIR, "output")
 METADATA_PATH = os.path.join(BASE_DIR, "data", "note_data")
 
 
 def _note_path(note_id: str) -> Path:
     return Path(METADATA_PATH) / f"{note_id}.json"
+
+
+def _sync_tag_counts(old_tags: list[str], new_tags: list[str]) -> None:
+    """Adjust _tags.json counts for tags added/removed on a note."""
+    old_set, new_set = set(old_tags), set(new_tags)
+    added = new_set - old_set
+    removed = old_set - new_set
+    if not added and not removed:
+        return
+
+    data = load_tags()
+    for t in added:
+        data[t] = data.get(t, 0) + 1
+    for t in removed:
+        if t in data:
+            data[t] = max(0, data[t] - 1)
+    save_tags(data)
+    return
 
 
 @app.get("/notes")
@@ -35,7 +54,7 @@ async def list_notes(
             file_path = Path(METADATA_PATH) / fname
             if file_path.suffix != ".json":
                 continue
-            if file_path.stem[0] == "_":
+            if file_path.stem.startswith("_"):
                 continue
 
             data = json.loads(file_path.read_text(encoding="utf-8"))
@@ -53,7 +72,7 @@ async def list_notes(
 
         return results
     except Exception as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/notes/{note_id}")
@@ -67,28 +86,41 @@ async def get_note(note_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/notes", status_code=status.HTTP_201_CREATED)
+@app.post("/notes", status_code=http_status.HTTP_201_CREATED)
 async def post_note(note: Note):
     try:
         store = JsonNoteStore(METADATA_PATH)
         store.save(note)
+
+        if note.tags:
+            _sync_tag_counts([], note.tags)
+
         return note
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.put("/notes/{note_id}")
-async def put_note(note_id: str, note: Note, status, tags):
+async def put_note(note_id: str, note: Note, status: str, tags: list[str]):
     file_path = _note_path(note_id)
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Note not found")
     try:
-        data = json.load(note.model_dump_json())
+        old_data = json.loads(file_path.read_text(encoding="utf-8"))
+        old_tags = old_data.get("tags", [])
+
+        data = json.loads(note.model_dump_json())
         data["status"] = status
         data["tags"] = tags
-        json_data= json.dumps(data, indent = 2)
-        file_path.write_text(json_data, encoding="utf-8")
-        return json_data
+        data["date_modified"] = datetime.now(timezone.utc).isoformat()
+
+        file_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+        _sync_tag_counts(old_tags, tags)
+
+        return data
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -98,7 +130,7 @@ async def patch_note(
     note_id: str,
     content: str | None = None,
     status: str | None = None,
-    tags: str | list[str] | None = [],
+    tags: list[str] | None = None,
     title: str | None = None,
 ):
     file_path = _note_path(note_id)
@@ -115,18 +147,11 @@ async def patch_note(
         if title is not None:
             note_data["title"] = title
         if tags is not None:
-            existing = note_data.get("tags", [])
-            new_tags = tags if isinstance(tags, list) else [tags]
-            note_data["tags"] = existing + [t for t in new_tags if t not in existing]
-            data = json.load(METADATA_PATH + "/_tags.json")
-            for t in [t for t in new_tags if t not in existing]:
-                if t not in data:
-                    data[t] = 1
-                else:
-                    data[t] += 1
-            Path(METADATA_PATH + "/_tags.json").write_text(json.dumps(data, indent = 2))            
+            old_tags = note_data.get("tags", [])
+            new_tags = list(dict.fromkeys(tags))  # dedupe, preserve order
+            note_data["tags"] = new_tags
+            _sync_tag_counts(old_tags, new_tags)
 
-                
         note_data["date_modified"] = datetime.now(timezone.utc).isoformat()
 
         file_path.write_text(json.dumps(note_data, indent=2), encoding="utf-8")
@@ -143,15 +168,14 @@ async def delete_note(note_id: str):
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Note not found")
     try:
+        note_data = json.loads(file_path.read_text(encoding="utf-8"))
+        old_tags = note_data.get("tags", [])
+
         os.remove(file_path)
-        return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+        if old_tags:
+            _sync_tag_counts(old_tags, [])
+
+        return Response(status_code=http_status.HTTP_204_NO_CONTENT)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-                   
-
-
-    
-
-    
-    

@@ -8,7 +8,7 @@ from fastapi import FastAPI, HTTPException, Response, status
 app = FastAPI()
 
 current_path = os.path.abspath(__file__)
-BASE_DIR = current_path[: -len("/api/sources.py")]
+BASE_DIR = current_path[: -len("/api/tags.py")]
 OUTPUT_PATH = os.path.join(BASE_DIR, "output")
 METADATA_PATH = os.path.join(BASE_DIR, "data", "note_data")
 
@@ -32,7 +32,7 @@ def rename_tag_in_notes(old: str, new: str) -> None:
             continue
         note = json.loads(file_path.read_text(encoding="utf-8"))
         note["tags"] = [new if x == old else x for x in note.get("tags", [])]
-        note["tags"] = list(dict.fromkeys(note["tags"]))  # dedupe, preserve order
+        note["tags"] = list(dict.fromkeys(note["tags"]))
         file_path.write_text(json.dumps(note, indent=2), encoding="utf-8")
 
 
