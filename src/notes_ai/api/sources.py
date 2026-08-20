@@ -4,13 +4,12 @@ import os
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 
 app = FastAPI()
 
-current_path = os.path.abspath(__file__)
-BASE_DIR = current_path[: -len("/api/sources.py")]
+BASE_DIR = str(Path(__file__).resolve().parents[3])
 SOURCES_PATH = os.path.join(BASE_DIR, "data", "sources.json")
 
 
@@ -31,8 +30,49 @@ class SourceCreate(BaseModel):
     note_focus: str | None = None
 
 
+from notes_ai.api.jobs import _read_jobs, _write_jobs
+import asyncio
+from notes_ai.main import generate_notes
+from notes_ai.adapters.storage.json_store import JsonNoteStore
+
+def run_job(job_id: str, location: str, note_focus: str | None = None):
+    jobs = _read_jobs()
+    for j in jobs:
+        if j["id"] == job_id:
+            j["status"] = "running"
+            break
+    _write_jobs(jobs)
+
+    try:
+        notes = asyncio.run(generate_notes([location]))
+        note_id = None
+        if notes:
+            note = notes[0]
+            note_id = note.title
+            
+            metadata_path = Path(BASE_DIR) / "data" / "note_data"
+            metadata_path.mkdir(parents=True, exist_ok=True)
+            
+            store = JsonNoteStore(metadata_path)
+            asyncio.run(store.save(note))
+
+        jobs = _read_jobs()
+        for j in jobs:
+            if j["id"] == job_id:
+                j["status"] = "done"
+                j["note_id"] = note_id
+                break
+        _write_jobs(jobs)
+    except Exception as e:
+        jobs = _read_jobs()
+        for j in jobs:
+            if j["id"] == job_id:
+                j["status"] = "failed"
+                break
+        _write_jobs(jobs)
+
 @app.post("/sources", status_code=202)
-async def create_source(body: SourceCreate):
+async def create_source(body: SourceCreate, background_tasks: BackgroundTasks):
     source_id = f"src_{uuid4().hex[:8]}"
     source_record = {
         "id": source_id,
@@ -45,8 +85,21 @@ async def create_source(body: SourceCreate):
     sources.append(source_record)
     _write_sources(sources)
 
-    # TODO: enqueue a pipeline job here and return its job_id
-    return {"job_id": f"job_{uuid4().hex[:4]}", "source": source_record}
+    job_id = f"job_{uuid4().hex[:4]}"
+    
+    jobs = _read_jobs()
+    jobs.append({
+        "id": job_id,
+        "status": "pending",
+        "type": "generate_note",
+        "source_id": source_id,
+    })
+    _write_jobs(jobs)
+
+    # Enqueue pipeline job
+    background_tasks.add_task(run_job, job_id, body.location, body.note_focus)
+
+    return {"job_id": job_id, "source": source_record}
 
 
 @app.get("/sources")

@@ -13,8 +13,7 @@ from notes_ai.models import Note
 
 app = FastAPI()
 
-current_path = os.path.abspath(__file__)
-BASE_DIR = current_path[: -len("/api/notes.py")]
+BASE_DIR = str(Path(__file__).resolve().parents[3])
 OUTPUT_PATH = os.path.join(BASE_DIR, "output")
 METADATA_PATH = os.path.join(BASE_DIR, "data", "note_data")
 
@@ -50,6 +49,7 @@ async def list_notes(
 ):
     try:
         results = []
+        os.makedirs(METADATA_PATH, exist_ok=True)
         for fname in os.listdir(METADATA_PATH):
             file_path = Path(METADATA_PATH) / fname
             if file_path.suffix != ".json":
@@ -89,8 +89,8 @@ async def get_note(note_id: str):
 @app.post("/notes", status_code=http_status.HTTP_201_CREATED)
 async def post_note(note: Note):
     try:
-        store = JsonNoteStore(METADATA_PATH)
-        store.save(note)
+        store = JsonNoteStore(Path(METADATA_PATH))
+        await store.save(note)
 
         if note.tags:
             _sync_tag_counts([], note.tags)

@@ -7,8 +7,7 @@ from fastapi import FastAPI, HTTPException
 
 app = FastAPI()
 
-current_path = os.path.abspath(__file__)
-BASE_DIR = current_path[: -len("/api/jobs.py")]
+BASE_DIR = str(Path(__file__).resolve().parents[3])
 JOBS_PATH = os.path.join(BASE_DIR, "data", "jobs.json")
 LOGS_PATH = os.path.join(BASE_DIR, "data", "logs")
 

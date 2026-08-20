@@ -7,8 +7,7 @@ from fastapi import FastAPI
 
 app = FastAPI()
 
-current_path = os.path.abspath(__file__)
-BASE_DIR = current_path[: -len("/api/stats.py")]
+BASE_DIR = str(Path(__file__).resolve().parents[3])
 NOTE_DATA_PATH = os.path.join(BASE_DIR, "data", "note_data")
 SOURCES_PATH = os.path.join(BASE_DIR, "data", "sources.json")
 

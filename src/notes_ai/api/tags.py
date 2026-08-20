@@ -7,8 +7,7 @@ from fastapi import FastAPI, HTTPException, Response, status
 
 app = FastAPI()
 
-current_path = os.path.abspath(__file__)
-BASE_DIR = current_path[: -len("/api/tags.py")]
+BASE_DIR = str(Path(__file__).resolve().parents[3])
 OUTPUT_PATH = os.path.join(BASE_DIR, "output")
 METADATA_PATH = os.path.join(BASE_DIR, "data", "note_data")
 

@@ -8,8 +8,7 @@ from fastapi import FastAPI, HTTPException, UploadFile
 
 app = FastAPI()
 
-current_path = os.path.abspath(__file__)
-BASE_DIR = current_path[: -len("/api/uploads.py")]
+BASE_DIR = str(Path(__file__).resolve().parents[3])
 UPLOAD_PATH = os.path.join(BASE_DIR, "data", "uploads")
 
 
