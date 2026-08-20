@@ -10,8 +10,7 @@ app = FastAPI()
 BASE_DIR = str(Path(__file__).resolve().parents[3])
 OUTPUT_PATH = os.path.join(BASE_DIR, "output")
 METADATA_PATH = os.path.join(BASE_DIR, "data", "note_data")
-
-TAGS_PATH = Path(METADATA_PATH) / "_tags.json"
+TAGS_PATH = Path(os.path.join(BASE_DIR, "data", "tags.json"))
 
 
 def load_tags() -> dict:
@@ -27,23 +26,25 @@ def save_tags(data: dict) -> None:
 def rename_tag_in_notes(old: str, new: str) -> None:
     for fname in os.listdir(METADATA_PATH):
         file_path = Path(METADATA_PATH) / fname
-        if file_path.suffix != ".json" or file_path.stem.startswith("_"):
+        if file_path.suffix != ".json":
             continue
         note = json.loads(file_path.read_text(encoding="utf-8"))
         note["tags"] = [new if x == old else x for x in note.get("tags", [])]
         note["tags"] = list(dict.fromkeys(note["tags"]))
         file_path.write_text(json.dumps(note, indent=2), encoding="utf-8")
 
+    return
+
 
 def remove_tag_from_notes(tag: str) -> None:
     for fname in os.listdir(METADATA_PATH):
         file_path = Path(METADATA_PATH) / fname
-        if file_path.suffix != ".json" or file_path.stem.startswith("_"):
+        if file_path.suffix != ".json" :
             continue
         note = json.loads(file_path.read_text(encoding="utf-8"))
         note["tags"] = [x for x in note.get("tags", []) if x != tag]
         file_path.write_text(json.dumps(note, indent=2), encoding="utf-8")
-
+    return
 
 @app.post("/tags", status_code=status.HTTP_201_CREATED)
 async def post_tag(tag: str):

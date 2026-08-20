@@ -9,15 +9,16 @@ from notes_ai.models import Note
 logger = logging.getLogger(__name__)
 
 
+
 class JsonNoteStore(NoteStore):
     """Saves the Note and all its metadata as a JSON file."""
 
     def __init__(self, base_dir: Path) -> None:
         self.base_dir = base_dir
         self.base_dir.mkdir(parents=True, exist_ok=True)
-        tags_path = self.base_dir / "_tags.json"
-        if not tags_path.exists():  
-            tags_path.write_text(json.dumps({}))
+        self.tags_path = self.base_dir.parents[0] / "tags.json"
+        if not self.tags_path.exists():  
+            self.tags_path.write_text(json.dumps({}))
 
     async def save(self, note: Note) -> str:
         base_id = note.title

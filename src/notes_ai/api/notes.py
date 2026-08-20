@@ -16,6 +16,7 @@ app = FastAPI()
 BASE_DIR = str(Path(__file__).resolve().parents[3])
 OUTPUT_PATH = os.path.join(BASE_DIR, "output")
 METADATA_PATH = os.path.join(BASE_DIR, "data", "note_data")
+TAGS_PATH = os.path.join(BASE_DIR, "data", "tags.json")
 
 
 def _note_path(note_id: str) -> Path:
@@ -54,9 +55,6 @@ async def list_notes(
             file_path = Path(METADATA_PATH) / fname
             if file_path.suffix != ".json":
                 continue
-            if file_path.stem.startswith("_"):
-                continue
-
             data = json.loads(file_path.read_text(encoding="utf-8"))
 
             if source_type and data.get("source", {}).get("input_type") != source_type:
@@ -122,8 +120,6 @@ async def put_note(note_id: str, note: Note, status: str, tags: list[str]):
         _sync_tag_counts(old_tags, tags)
 
         return data
-    except HTTPException:
-        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -133,7 +129,7 @@ async def patch_note(
     note_id: str,
     content: str | None = None,
     status: str | None = None,
-    tags: list[str] | None = None,
+    tags: list[str] | None = Query(default=None),
     title: str | None = None,
 ):
     file_path = _note_path(note_id)
