@@ -19,12 +19,21 @@ class JsonNoteStore(NoteStore):
         if not tags_path.exists():  
             tags_path.write_text(json.dumps({}))
 
-    async def save(self, note: Note) -> None:
-        note_id = note.title
+    async def save(self, note: Note) -> str:
+        base_id = note.title
+        note_id = base_id
+        counter = 1
+        while (self.base_dir / f"{note_id}.json").exists():
+            note_id = f"{base_id}_{counter}"
+            counter += 1
+
         file_path = self.base_dir / f"{note_id}.json"
+        
         json_data = note.model_dump_json(indent=2)
         json_data = json.loads(json_data)
+        json_data["title"] = note_id
         json_data["tags"] = []
-        json_data = json.dumps(json_data, indent = 2)
+        json_data = json.dumps(json_data, indent=2)
         file_path.write_text(json_data, encoding="utf-8")
         logger.info("Saved note to %s", file_path)
+        return note_id

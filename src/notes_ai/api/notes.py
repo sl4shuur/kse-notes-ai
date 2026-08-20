@@ -90,11 +90,14 @@ async def get_note(note_id: str):
 async def post_note(note: Note):
     try:
         store = JsonNoteStore(Path(METADATA_PATH))
-        await store.save(note)
+        new_title = await store.save(note)
 
         if note.tags:
             _sync_tag_counts([], note.tags)
 
+        if new_title != note.title:
+            note = note.model_copy(update={"title": new_title})
+            
         return note
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

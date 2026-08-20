@@ -57,7 +57,9 @@ class PersistenceStep:
     async def run(self, context: NoteContext) -> NoteContext:
         if context.note is None:
             raise RuntimeError("GenerationStep must run before PersistenceStep")
-        await self.store.save(context.note)
+        new_title = await self.store.save(context.note)
+        if new_title and new_title != context.note.title:
+            context.note = context.note.model_copy(update={"title": new_title})
         return context
 
 

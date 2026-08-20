@@ -54,7 +54,7 @@ def run_job(job_id: str, location: str, note_focus: str | None = None):
             metadata_path.mkdir(parents=True, exist_ok=True)
             
             store = JsonNoteStore(metadata_path)
-            asyncio.run(store.save(note))
+            note_id = asyncio.run(store.save(note))
 
         jobs = _read_jobs()
         for j in jobs:
