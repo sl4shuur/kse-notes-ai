@@ -34,6 +34,7 @@ class JsonNoteStore(NoteStore):
         json_data = json.loads(json_data)
         json_data["title"] = note_id
         json_data["tags"] = []
+        json_data["status"] = "draft"
         json_data = json.dumps(json_data, indent=2)
         file_path.write_text(json_data, encoding="utf-8")
         logger.info("Saved note to %s", file_path)
