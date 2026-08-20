@@ -4,6 +4,8 @@ import asyncio
 import logging
 from collections.abc import Sequence
 from pathlib import Path
+import os
+import re
 
 from notes_ai.adapters.extractors import (
     AudioExtractor,
@@ -68,10 +70,23 @@ async def generate_notes(
 
     generated_notes: list[Note] = []
     source_count = len(sources)
+    last_note_index = 0
+    if os.listdir(output_dir):
+        pattern = re.compile(r"note_(\d+)\.md$")
 
+
+        numbers = []
+        for p in os.listdir(output_dir):
+            match = pattern.search(p)
+            if match:
+                numbers.append(int(match.group(1)))
+
+        last_note_index = max(numbers) if numbers else 0
+
+        
     for index, source_path in enumerate(sources, start=1):
         logger.info("[%s/%s] Processing source: %s", index, source_count, source_path)
-        title = _note_title(source_path, index, source_count, name)
+        title = _note_title(source_path, index + last_note_index, source_count, name)
 
         try:
             source = create_source(source_path, logger, title=title)

@@ -15,10 +15,16 @@ class JsonNoteStore(NoteStore):
     def __init__(self, base_dir: Path) -> None:
         self.base_dir = base_dir
         self.base_dir.mkdir(parents=True, exist_ok=True)
+        tags_path = self.base_dir / "_tags.json"
+        if not tags_path.exists():  
+            tags_path.write_text(json.dumps({}))
 
     async def save(self, note: Note) -> None:
         note_id = str(uuid4())
         file_path = self.base_dir / f"{note_id}.json"
         json_data = note.model_dump_json(indent=2)
+        json_data = json.loads(json_data)
+        json_data["tags"] = []
+        json_data = json.dumps(json_data, indent = 2)
         file_path.write_text(json_data, encoding="utf-8")
         logger.info("Saved note to %s", file_path)
