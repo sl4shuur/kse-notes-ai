@@ -9,6 +9,7 @@ from fastapi import status as http_status
 
 from notes_ai.api.tags import load_tags, save_tags
 from notes_ai.adapters.storage.json_store import JsonNoteStore
+from notes_ai.adapters.storage.markdown import MarkdownNoteStore
 from notes_ai.models import Note
 
 app = FastAPI()
@@ -88,6 +89,8 @@ async def get_note(note_id: str):
 async def post_note(note: Note):
     try:
         store = JsonNoteStore(Path(METADATA_PATH))
+        md_store = MarkdownNoteStore(Path(OUTPUT_PATH))
+        await md_store.save(note)
         new_title = await store.save(note)
 
         if note.tags:
@@ -102,19 +105,24 @@ async def post_note(note: Note):
 
 
 @app.put("/notes/{note_id}")
-async def put_note(note_id: str, note: Note, status: str, tags: list[str]):
+async def put_note(note_id: str, note: Note, status: str = "draft", tags: list[str] = []):
     file_path = _note_path(note_id)
     if not file_path.exists():
-        raise HTTPException(status_code=404, detail="Note not found")
+            raise HTTPException(status_code=404, detail="Note not found(json)")
+    
+    md_path = Path(OUTPUT_PATH + f"/{note_id}.md")
+    if not md_path.exists():
+            raise HTTPException(status_code=404, detail="Note not found(md)")
+    
     try:
         old_data = json.loads(file_path.read_text(encoding="utf-8"))
         old_tags = old_data.get("tags", [])
-
         data = json.loads(note.model_dump_json())
         data["status"] = status
         data["tags"] = tags
         data["date_modified"] = datetime.now(timezone.utc).isoformat()
-
+        os.remove(md_path)
+        md_path.write_text(data["content"])
         file_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
         _sync_tag_counts(old_tags, tags)
@@ -134,17 +142,26 @@ async def patch_note(
 ):
     file_path = _note_path(note_id)
     if not file_path.exists():
-        raise HTTPException(status_code=404, detail="Note not found")
-
+        raise HTTPException(status_code=404, detail="Note not found(json)")
+    
+    md_path = Path(OUTPUT_PATH + f"/{note_id}.md")
+    if not md_path.exists():
+            raise HTTPException(status_code=404, detail="Note not found(md)")
+    
     try:
         note_data = json.loads(file_path.read_text(encoding="utf-8"))
-
+        
         if content is not None:
             note_data["content"] = content
+            os.remove(md_path)
+            md_path.write_text(content)
+
         if status is not None:
             note_data["status"] = status
+
         if title is not None:
             note_data["title"] = title
+
         if tags is not None:
             old_tags = note_data.get("tags", [])
             new_tags = list(dict.fromkeys(tags))  # dedupe, preserve order
@@ -155,8 +172,10 @@ async def patch_note(
 
         file_path.write_text(json.dumps(note_data, indent=2), encoding="utf-8")
         return note_data
+    
     except HTTPException:
         raise
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -165,12 +184,17 @@ async def patch_note(
 async def delete_note(note_id: str):
     file_path = _note_path(note_id)
     if not file_path.exists():
-        raise HTTPException(status_code=404, detail="Note not found")
+            raise HTTPException(status_code=404, detail="Note not found(json)")
+    
+    md_path = Path(OUTPUT_PATH + f"/{note_id}.md")
+    if not md_path.exists():
+                raise HTTPException(status_code=404, detail="Note not found(md)")
+    
     try:
         note_data = json.loads(file_path.read_text(encoding="utf-8"))
         old_tags = note_data.get("tags", [])
-        
-        os.remove(OUTPUT_PATH + f"/{note_id}.md")
+
+        os.remove(md_path)
         os.remove(file_path)
        
 
