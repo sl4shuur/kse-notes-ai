@@ -4,6 +4,8 @@ import asyncio
 import logging
 from collections.abc import Sequence
 from pathlib import Path
+import os
+import re
 
 from notes_ai.adapters.extractors import (
     AudioExtractor,
@@ -42,7 +44,8 @@ async def generate_notes(
     output_dir: str | Path = "output",
     name: str | None = None,
     verbose: bool = False,
-    tracing = True
+    tracing = True,
+    is_cli: bool = False
     ) -> list[Note]:
     """Generate notes for sources using the configured application adapters."""
     config = get_config()
@@ -53,9 +56,7 @@ async def generate_notes(
     if not config.groq_api_key:
         raise ConfigurationError("GROQ_API_KEY is not set. Add it to the environment or .env file.")
 
-    
-    llm = GroqLLMClient(api_key=config.groq_api_key, tracing= tracing )
-
+    llm = GroqLLMClient(api_key=config.groq_api_key, tracing=tracing)
     generator = NoteGenerator(llm, logger)
     store = MarkdownNoteStore(output_dir=output_dir)
     extractors = [
@@ -68,10 +69,25 @@ async def generate_notes(
 
     generated_notes: list[Note] = []
     source_count = len(sources)
+    last_note_index = 0
+    if os.listdir(output_dir):
+        pattern = re.compile(r"note_(\d+)\.md$")
+        numbers = []
+        for p in os.listdir(output_dir):
+            match = pattern.search(p)
+            if match:
+                numbers.append(int(match.group(1)))
+
+        last_note_index = max(numbers) if numbers else 0
 
     for index, source_path in enumerate(sources, start=1):
         logger.info("[%s/%s] Processing source: %s", index, source_count, source_path)
-        title = _note_title(source_path, index, source_count, name)
+        title = _note_title(source_path, index + last_note_index, source_count, name)
+
+        if is_cli:
+            if (Path(output_dir) / f"{title}.md").exists() or (Path("data/note_data") / f"{title}.json").exists():
+                logger.warning("A note with the name '%s' already exists. Skipping...", title)
+                continue
 
         try:
             source = create_source(source_path, logger, title=title)
@@ -103,7 +119,8 @@ def run(
     output_dir: str | Path = "output",
     name: str | None = None,
     verbose: bool = False,
-    tracing = True
+    tracing = True,
+    is_cli: bool = False
 ) -> list[Note]:
     """Run the asynchronous application workflow from synchronous callers."""
     return asyncio.run(
@@ -112,6 +129,7 @@ def run(
             output_dir=output_dir,
             name=name,
             verbose=verbose,
-            tracing = tracing
+            tracing=tracing,
+            is_cli=is_cli
         )
     )

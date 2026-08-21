@@ -61,7 +61,8 @@ def cli(
             output_dir=output_dir,
             name=name,
             verbose=verbose,
-            tracing=  tracing
+            tracing=tracing,
+            is_cli=True
         )
     except ConfigurationError as error:
         raise click.ClickException(str(error)) from error
