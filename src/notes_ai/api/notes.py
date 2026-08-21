@@ -169,8 +169,10 @@ async def delete_note(note_id: str):
     try:
         note_data = json.loads(file_path.read_text(encoding="utf-8"))
         old_tags = note_data.get("tags", [])
-
+        
+        os.remove(OUTPUT_PATH + f"/{note_id}.md")
         os.remove(file_path)
+       
 
         if old_tags:
             _sync_tag_counts(old_tags, [])
