@@ -16,4 +16,5 @@ RUN uv run playwright install --with-deps chromium
 
 RUN uv sync --frozen
 
-ENTRYPOINT ["uv", "run", "python", "-m", "notes_ai.main"]
+
+ENTRYPOINT ["uv", "run", "uvicorn", "notes_ai.api.app:app", "--host", "0.0.0.0", "--port", "8000"]

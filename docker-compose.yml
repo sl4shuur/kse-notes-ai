@@ -1,14 +1,19 @@
 services:
-  cli:
+  api:
     build: .
+    ports:
+      - "8000:8000"
     volumes:
       - ./src:/app/src
+      - ./data:/app/data
+      - ./output:/app/output
     env_file:
       - .env
-    stdin_open: true
-    tty: true
-    # docker-compose.yml
-
+    environment:
+      - PHOENIX_COLLECTOR_ENDPOINT=http://phoenix:6006/v1/traces
+    depends_on:
+      - phoenix
+    restart: unless-stopped
   phoenix:
     image: arizephoenix/phoenix:latest  # must be >= 4.0
     ports:
