@@ -42,6 +42,10 @@ class Config(BaseSettings):
         default="",
         validation_alias=AliasChoices("GROQ_API_KEY", "APP_GROQ_API_KEY"),
     )
+    phoenix_collector_endpoint: str = Field(
+        default="http://phoenix:6006/v1/traces",
+        validation_alias=AliasChoices("PHOENIX_COLLECTOR_ENDPOINT", "APP_PHOENIX_COLLECTOR_ENDPOINT"),
+    )
 
 
 def _prepare_runtime(config: Config) -> None:
