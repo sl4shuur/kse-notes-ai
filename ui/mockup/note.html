@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Notes AI — Transformers, Explained Simply</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark">N</span> Notes AI</div>
+    <nav class="nav">
+      <div class="nav-label">Workspace</div>
+      <a href="index.html"><span class="nav-icon">⌂</span> Dashboard</a>
+      <a href="new-note.html"><span class="nav-icon">＋</span> New note</a>
+      <a href="library.html"><span class="nav-icon">▤</span> Library</a>
+    </nav>
+    <div class="sidebar-footer">Static UI mockup<br />No live backend</div>
+  </aside>
+
+  <main class="main">
+    <div class="page-header">
+      <p class="eyebrow">Review note</p>
+      <h1>Transformers, Explained Simply</h1>
+      <p class="tag-row" style="margin-top:10px;">
+        <span class="tag">▶ YouTube · 18 min</span>
+        <span class="tag">Generated today, 09:41</span>
+        <span class="tag tag-accent">Draft</span>
+      </p>
+    </div>
+
+    <ul class="steps">
+      <li class="done"><span class="dot">✓</span> Add source</li>
+      <li class="connector"></li>
+      <li class="done"><span class="dot">✓</span> Processing</li>
+      <li class="connector"></li>
+      <li class="active"><span class="dot">3</span> Review</li>
+      <li class="connector"></li>
+      <li><span class="dot">4</span> Save</li>
+    </ul>
+
+    <div class="note-layout">
+      <div class="note-doc">
+        <div class="card">
+          <h2>Overview</h2>
+          <p>
+            The video introduces the <mark>transformer architecture</mark>, the backbone of
+            modern large language models. Instead of processing text one word at a time like
+            older recurrent networks, transformers look at an entire sequence at once using a
+            mechanism called <mark>self-attention</mark>.
+          </p>
+
+          <h2>Self-attention, in one sentence</h2>
+          <p>
+            Every word produces a query, key, and value vector; attention scores measure how
+            relevant every other word is to the current one, and the output is a weighted blend
+            of all the value vectors.
+          </p>
+
+          <div class="callout">
+            <strong>Metaphor</strong>
+            Think of self-attention as a room full of people at a conference: each person
+            (word) briefly "listens" to everyone else in the room and adjusts what they say next
+            based on who seemed most relevant to their own topic.
+          </div>
+
+          <h2>Why it scales well</h2>
+          <ul>
+            <li>All positions are processed in parallel, unlike RNNs which are sequential.</li>
+            <li><mark>Positional encoding</mark> injects word order back in, since attention itself is order-agnostic.</li>
+            <li>Stacking many attention layers lets the model build increasingly abstract representations.</li>
+          </ul>
+
+          <div class="visual-placeholder">◇ Diagram — self-attention over a 5-token sequence (generated)</div>
+
+          <h2>Worked example</h2>
+          <p>
+            For the sentence <em>"the cat sat because it was tired"</em>, attention lets the
+            model connect <mark>it</mark> to <mark>cat</mark> rather than <mark>sat</mark>,
+            resolving the pronoun correctly using context from across the whole sentence.
+          </p>
+
+          <div class="visual-placeholder">▦ Plot — attention weight heatmap for the example sentence (generated)</div>
+        </div>
+      </div>
+
+      <aside>
+        <div class="sidebar-block">
+          <h3>Tags</h3>
+          <div class="tag-row">
+            <span class="tag">machine-learning</span>
+            <span class="tag">nlp</span>
+            <span class="tag">attention</span>
+          </div>
+        </div>
+
+        <div class="sidebar-block">
+          <h3>Related notes</h3>
+          <a class="related-note" href="note.html">
+            <div class="title">Positional Encoding, Visually</div>
+            <div class="meta">92% similar · Article</div>
+          </a>
+          <a class="related-note" href="note.html">
+            <div class="title">RNNs vs. Transformers</div>
+            <div class="meta">81% similar · PDF</div>
+          </a>
+          <a class="related-note" href="note.html">
+            <div class="title">A Primer on Vector Databases</div>
+            <div class="meta">64% similar · PDF</div>
+          </a>
+        </div>
+
+        <div class="sidebar-block">
+          <h3>Source</h3>
+          <p style="font-size:13px; color:var(--text-muted); margin:0;">
+            youtube.com/watch?v=aircAruvnKk<br />18:04 duration
+          </p>
+        </div>
+      </aside>
+    </div>
+
+    <div class="btn-row">
+      <a class="btn btn-primary" href="library.html">Save to library →</a>
+      <a class="btn" href="new-note.html">Discard</a>
+    </div>
+  </main>
+</div>
+</body>
+</html>

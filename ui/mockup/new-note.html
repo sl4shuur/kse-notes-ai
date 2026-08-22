@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Notes AI — New note</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark">N</span> Notes AI</div>
+    <nav class="nav">
+      <div class="nav-label">Workspace</div>
+      <a href="index.html"><span class="nav-icon">⌂</span> Dashboard</a>
+      <a href="new-note.html" class="active"><span class="nav-icon">＋</span> New note</a>
+      <a href="library.html"><span class="nav-icon">▤</span> Library</a>
+    </nav>
+    <div class="sidebar-footer">Static UI mockup<br />No live backend</div>
+  </aside>
+
+  <main class="main">
+    <div class="page-header">
+      <p class="eyebrow">New note</p>
+      <h1>Add a source</h1>
+      <p>Choose where the content comes from. Notes AI extracts the text, transcript, or visual content before writing the note.</p>
+    </div>
+
+    <ul class="steps">
+      <li class="active"><span class="dot">1</span> Add source</li>
+      <li class="connector"></li>
+      <li><span class="dot">2</span> Processing</li>
+      <li class="connector"></li>
+      <li><span class="dot">3</span> Review</li>
+      <li class="connector"></li>
+      <li><span class="dot">4</span> Save</li>
+    </ul>
+
+    <div class="card">
+      <div class="tabs">
+        <div class="tab active" data-tab="youtube">▶ YouTube</div>
+        <div class="tab" data-tab="web">🌐 Web article</div>
+        <div class="tab" data-tab="pdf">📄 PDF</div>
+        <div class="tab" data-tab="image">🖼 Image</div>
+        <div class="tab" data-tab="audio">🎧 Audio</div>
+      </div>
+
+      <div class="tab-panel active" data-panel="youtube">
+        <div class="field">
+          <label>YouTube URL</label>
+          <input type="url" placeholder="https://www.youtube.com/watch?v=..." value="https://www.youtube.com/watch?v=aircAruvnKk" />
+          <p class="hint">The transcript and key frames are extracted automatically — no manual timestamps needed.</p>
+        </div>
+      </div>
+
+      <div class="tab-panel" data-panel="web">
+        <div class="field">
+          <label>Article URL</label>
+          <input type="url" placeholder="https://example.com/blog-post" />
+          <p class="hint">Works with most blogs and documentation sites. Dynamic pages are rendered headlessly before extraction.</p>
+        </div>
+      </div>
+
+      <div class="tab-panel" data-panel="pdf">
+        <div class="field">
+          <label>Upload PDF</label>
+          <div class="dropzone">
+            <div class="icon">📄</div>
+            <p><strong>Drop a PDF here</strong> or click to browse</p>
+            <p class="hint">Up to 50 MB. Scanned documents are processed with OCR.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-panel" data-panel="image">
+        <div class="field">
+          <label>Upload image</label>
+          <div class="dropzone">
+            <div class="icon">🖼</div>
+            <p><strong>Drop an image here</strong> or click to browse</p>
+            <p class="hint">Diagrams, slides, and whiteboard photos work well.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-panel" data-panel="audio">
+        <div class="field">
+          <label>Upload audio</label>
+          <div class="dropzone">
+            <div class="icon">🎧</div>
+            <p><strong>Drop an audio file here</strong> or click to browse</p>
+            <p class="hint">Lectures, podcasts, and meeting recordings are transcribed before synthesis.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:4px;">
+        <label>Note focus <span style="color:var(--text-faint); font-weight:400;">(optional)</span></label>
+        <input type="text" placeholder="e.g. focus on the math behind attention" />
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <a class="btn btn-primary" href="processing.html">Generate note →</a>
+      <a class="btn" href="index.html">Cancel</a>
+    </div>
+  </main>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>
