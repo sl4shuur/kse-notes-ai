@@ -93,9 +93,6 @@ async def post_note(note: Note):
         await md_store.save(note)
         new_title = await store.save(note)
 
-        if note.tags:
-            _sync_tag_counts([], note.tags)
-
         if new_title != note.title:
             note = note.model_copy(update={"title": new_title})
             
