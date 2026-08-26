@@ -33,7 +33,6 @@ class SourceCreate(BaseModel):
 from notes_ai.api.jobs import _read_jobs, _write_jobs
 import asyncio
 from notes_ai.main import generate_notes
-from notes_ai.adapters.storage.json_store import JsonNoteStore
 
 def run_job(job_id: str, location: str, note_focus: str | None = None):
     jobs = _read_jobs()
@@ -49,12 +48,6 @@ def run_job(job_id: str, location: str, note_focus: str | None = None):
         if notes:
             note = notes[0]
             note_id = note.title
-            
-            metadata_path = Path(BASE_DIR) / "data" / "note_data"
-            metadata_path.mkdir(parents=True, exist_ok=True)
-            
-            store = JsonNoteStore(metadata_path)
-            note_id = asyncio.run(store.save(note))
 
         jobs = _read_jobs()
         for j in jobs:

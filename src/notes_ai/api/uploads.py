@@ -28,11 +28,19 @@ async def upload_file(file: UploadFile):
 
 @app.delete("/uploads/{file_id}")
 async def delete_upload(file_id: str):
+    import re
+
+    if not re.fullmatch(r"file_[0-9a-f]{8}", file_id):
+        raise HTTPException(status_code=400, detail="Invalid file ID format")
+
     if not os.path.exists(UPLOAD_PATH):
         raise HTTPException(status_code=404, detail="Upload not found")
 
-    import glob
-    matches = glob.glob(os.path.join(UPLOAD_PATH, f"{file_id}.*"))
+    matches = [
+        os.path.join(UPLOAD_PATH, f)
+        for f in os.listdir(UPLOAD_PATH)
+        if f.startswith(file_id + ".") or f == file_id
+    ]
     if not matches:
         raise HTTPException(status_code=404, detail="Upload not found")
 
