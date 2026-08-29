@@ -38,11 +38,18 @@ CONTEXT_SETTINGS = {
     is_flag=True,
     help="Enable debug logging.",
 )
+@click.option(
+    "--tracing",
+    "-t",
+    is_flag=True,
+    help="Enable Arize Phoenix tracing.",
+)
 def cli(
     sources: tuple[str, ...],
     output_dir: Path,
     name: str | None,
     verbose: bool,
+    tracing: bool
 ) -> None:
     """Generate structured study notes from SOURCE URLs or local files."""
     if name and len(sources) != 1:
@@ -54,6 +61,8 @@ def cli(
             output_dir=output_dir,
             name=name,
             verbose=verbose,
+            tracing=tracing,
+            is_cli=True
         )
     except ConfigurationError as error:
         raise click.ClickException(str(error)) from error
