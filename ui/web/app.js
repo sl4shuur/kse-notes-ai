@@ -130,48 +130,191 @@ function inlineMarkdown(value) {
     .replace(/`([^`]+)`/g, "<code>$1</code>");
 }
 
-function renderMarkdown(markdown = "") {
-  const output = [];
-  let inList = false;
-  let inCode = false;
-  const closeList = () => {
-    if (inList) output.push("</ul>");
-    inList = false;
-  };
+function isHorizontalRule(line) {
+  return /^\s{0,3}(?:-{3,}|\*{3,}|_{3,})\s*$/.test(line);
+}
 
-  for (const line of String(markdown).split("\n")) {
-    if (line.trim().startsWith("```")) {
-      closeList();
-      output.push(inCode ? "</code></pre>" : "<pre><code>");
-      inCode = !inCode;
-      continue;
-    }
-    if (inCode) {
-      output.push(`${escapeHtml(line)}\n`);
-      continue;
-    }
-    if (/^###\s+/.test(line)) {
-      closeList();
-      output.push(`<h3>${inlineMarkdown(line.replace(/^###\s+/, ""))}</h3>`);
-    } else if (/^##\s+/.test(line)) {
-      closeList();
-      output.push(`<h2>${inlineMarkdown(line.replace(/^##\s+/, ""))}</h2>`);
-    } else if (/^[-*]\s+/.test(line)) {
-      if (!inList) output.push("<ul>");
-      inList = true;
-      output.push(`<li>${inlineMarkdown(line.replace(/^[-*]\s+/, ""))}</li>`);
-    } else if (/^>\s?/.test(line)) {
-      closeList();
-      output.push(`<blockquote>${inlineMarkdown(line.replace(/^>\s?/, ""))}</blockquote>`);
-    } else if (!line.trim()) {
-      closeList();
-    } else {
-      closeList();
-      output.push(`<p>${inlineMarkdown(line)}</p>`);
-    }
+function tableCells(line) {
+  return line
+    .trim()
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map((cell) => cell.trim());
+}
+
+function isTableStart(lines, index) {
+  if (!lines[index]?.includes("|") || !lines[index + 1]?.includes("|")) return false;
+  const dividers = tableCells(lines[index + 1]);
+  return dividers.length > 0 && dividers.every((cell) => /^:?-{3,}:?$/.test(cell));
+}
+
+function parseTable(lines, start) {
+  const headers = tableCells(lines[start]);
+  const rows = [];
+  let index = start + 2;
+  while (index < lines.length && lines[index].trim() && lines[index].includes("|")) {
+    rows.push(tableCells(lines[index]));
+    index += 1;
   }
-  closeList();
-  if (inCode) output.push("</code></pre>");
+
+  return {
+    html: `<div class="table-wrap"><table><thead><tr>${headers.map((cell) => `<th>${inlineMarkdown(cell)}</th>`).join("")}</tr></thead><tbody>${rows.map((row) => `<tr>${headers.map((_, cellIndex) => `<td>${inlineMarkdown(row[cellIndex] || "")}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`,
+    nextIndex: index,
+  };
+}
+
+function parseOrderedList(lines, start) {
+  let index = start;
+  let html = "<ol>";
+
+  while (index < lines.length) {
+    const item = lines[index].match(/^\s{0,3}\d+[.)]\s+(.+)$/);
+    if (!item) break;
+
+    html += `<li><div>${inlineMarkdown(item[1].trimEnd())}</div>`;
+    index += 1;
+    const nestedItems = [];
+
+    while (index < lines.length) {
+      if (!lines[index].trim()) {
+        let next = index + 1;
+        while (next < lines.length && !lines[next].trim()) next += 1;
+        if (/^\s{0,3}\d+[.)]\s+/.test(lines[next] || "")) {
+          index = next;
+          break;
+        }
+        if (/^\s{2,}[-+*]\s+/.test(lines[next] || "")) {
+          index = next;
+          continue;
+        }
+        index = next;
+        break;
+      }
+
+      const nested = lines[index].match(/^\s{2,}[-+*]\s+(.+)$/);
+      if (!nested) break;
+      nestedItems.push(nested[1].trimEnd());
+      index += 1;
+    }
+
+    if (nestedItems.length) {
+      html += `<ul>${nestedItems.map((nested) => `<li>${inlineMarkdown(nested)}</li>`).join("")}</ul>`;
+    }
+    html += "</li>";
+  }
+
+  return { html: `${html}</ol>`, nextIndex: index };
+}
+
+function parseUnorderedList(lines, start) {
+  let index = start;
+  const items = [];
+  while (index < lines.length) {
+    const item = lines[index].match(/^\s{0,3}[-+*]\s+(.+)$/);
+    if (!item) break;
+    items.push(item[1].trimEnd());
+    index += 1;
+  }
+  return {
+    html: `<ul>${items.map((item) => `<li>${inlineMarkdown(item)}</li>`).join("")}</ul>`,
+    nextIndex: index,
+  };
+}
+
+function startsMarkdownBlock(lines, index) {
+  const line = lines[index] || "";
+  return !line.trim()
+    || /^\s*```/.test(line)
+    || /^\s{0,3}#{1,6}\s+/.test(line)
+    || isHorizontalRule(line)
+    || /^\s{0,3}\d+[.)]\s+/.test(line)
+    || /^\s{0,3}[-+*]\s+/.test(line)
+    || /^\s{0,3}>\s?/.test(line)
+    || isTableStart(lines, index);
+}
+
+function renderMarkdown(markdown = "") {
+  const lines = String(markdown).replace(/\r\n?/g, "\n").split("\n");
+  const output = [];
+  let index = 0;
+
+  while (index < lines.length) {
+    const line = lines[index];
+
+    if (!line.trim()) {
+      index += 1;
+      continue;
+    }
+
+    const fence = line.match(/^\s*```([\w-]*)\s*$/);
+    if (fence) {
+      const code = [];
+      index += 1;
+      while (index < lines.length && !/^\s*```\s*$/.test(lines[index])) {
+        code.push(lines[index]);
+        index += 1;
+      }
+      if (index < lines.length) index += 1;
+      const language = fence[1] ? ` class="language-${escapeHtml(fence[1])}"` : "";
+      output.push(`<pre><code${language}>${escapeHtml(code.join("\n"))}</code></pre>`);
+      continue;
+    }
+
+    if (isHorizontalRule(line)) {
+      output.push("<hr>");
+      index += 1;
+      continue;
+    }
+
+    const heading = line.match(/^\s{0,3}(#{1,6})\s+(.+?)\s*#*\s*$/);
+    if (heading) {
+      const level = heading[1].length;
+      output.push(`<h${level}>${inlineMarkdown(heading[2])}</h${level}>`);
+      index += 1;
+      continue;
+    }
+
+    if (isTableStart(lines, index)) {
+      const table = parseTable(lines, index);
+      output.push(table.html);
+      index = table.nextIndex;
+      continue;
+    }
+
+    if (/^\s{0,3}\d+[.)]\s+/.test(line)) {
+      const list = parseOrderedList(lines, index);
+      output.push(list.html);
+      index = list.nextIndex;
+      continue;
+    }
+
+    if (/^\s{0,3}[-+*]\s+/.test(line)) {
+      const list = parseUnorderedList(lines, index);
+      output.push(list.html);
+      index = list.nextIndex;
+      continue;
+    }
+
+    if (/^\s{0,3}>\s?/.test(line)) {
+      const quote = [];
+      while (index < lines.length && /^\s{0,3}>\s?/.test(lines[index])) {
+        quote.push(lines[index].replace(/^\s{0,3}>\s?/, ""));
+        index += 1;
+      }
+      output.push(`<blockquote>${quote.map(inlineMarkdown).join("<br>")}</blockquote>`);
+      continue;
+    }
+
+    const paragraph = [];
+    while (index < lines.length && !startsMarkdownBlock(lines, index)) {
+      const hardBreak = /\s{2,}$/.test(lines[index]);
+      paragraph.push(`${inlineMarkdown(lines[index].trimEnd())}${hardBreak ? "<br>" : ""}`);
+      index += 1;
+    }
+    output.push(`<p>${paragraph.join(" ")}</p>`);
+  }
+
   return output.join("");
 }
 

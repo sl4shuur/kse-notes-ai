@@ -181,6 +181,35 @@ input:focus {
   margin: 22px 0 8px;
 }
 
+.note-doc hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 30px 0;
+}
+
+.note-doc ol,
+.note-doc ul {
+  margin: 0 0 18px;
+  padding-left: 24px;
+}
+
+.note-doc ol > li {
+  margin-bottom: 18px;
+  padding-left: 3px;
+}
+
+.note-doc ol > li::marker {
+  font-weight: 600;
+}
+
+.note-doc li > ul {
+  margin: 8px 0 0;
+}
+
+.note-doc li > ul > li {
+  margin-bottom: 6px;
+}
+
 .note-doc pre,
 .note-doc code {
   font-family: var(--mono);
@@ -198,6 +227,36 @@ input:focus {
   padding: 10px 16px;
   border-left: 3px solid var(--accent);
   background: var(--accent-soft);
+}
+
+.table-wrap {
+  width: 100%;
+  margin: 18px 0 24px;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.note-doc table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.note-doc th,
+.note-doc td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.note-doc th {
+  background: var(--surface-muted);
+  font-weight: 600;
+}
+
+.note-doc tr:last-child td {
+  border-bottom: 0;
 }
 
 .source-location {
