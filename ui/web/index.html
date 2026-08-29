@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Turn videos, articles, documents, images, and audio into structured study notes." />
+    <title>Notes AI</title>
+    <link rel="stylesheet" href="/assets/mockup.css" />
+    <link rel="stylesheet" href="/app.css" />
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <a class="brand" href="#/dashboard" aria-label="Notes AI dashboard">
+          <span class="brand-mark">N</span> Notes AI
+        </a>
+        <nav class="nav" aria-label="Workspace">
+          <div class="nav-label">Workspace</div>
+          <a href="#/dashboard" data-nav="dashboard"><span class="nav-icon">⌂</span> Dashboard</a>
+          <a href="#/new" data-nav="new"><span class="nav-icon">＋</span> New note</a>
+          <a href="#/library" data-nav="library"><span class="nav-icon">▤</span> Library</a>
+        </nav>
+        <div class="sidebar-footer">
+          <span class="status-dot" aria-hidden="true"></span>
+          Connected to Notes AI
+        </div>
+      </aside>
+
+      <main class="main" id="view" tabindex="-1">
+        <div class="loading-state">Loading Notes AI…</div>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="/app.js" defer></script>
+  </body>
+</html>
