@@ -1,17 +1,26 @@
 from groq import AsyncGroq
-
+from openinference.instrumentation.groq import GroqInstrumentor
 from notes_ai.interfaces import LLMClient
-
-
+from phoenix.otel import register
+import os
 class GroqLLMClient(LLMClient):
     def __init__(
         self,
         api_key: str,
         model: str = "openai/gpt-oss-20b",
+        tracing = True,
+        phoenix_endpoint = "http://phoenix:6006/v1/traces"
     ):
         self.client = AsyncGroq(api_key=api_key)
         self.model = model
-
+        if tracing:
+            self._tracer_provider = register(
+                project_name="Notes-AI",
+                endpoint=phoenix_endpoint,
+                batch=True,
+                set_global_tracer_provider=False,
+                )        
+            GroqInstrumentor().instrument(tracer_provider=self._tracer_provider)
     async def complete(
         self,
         *,
