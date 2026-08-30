@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Notes AI — Dashboard</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark">N</span> Notes AI</div>
+    <nav class="nav">
+      <div class="nav-label">Workspace</div>
+      <a href="index.html" class="active"><span class="nav-icon">⌂</span> Dashboard</a>
+      <a href="new-note.html"><span class="nav-icon">＋</span> New note</a>
+      <a href="library.html"><span class="nav-icon">▤</span> Library</a>
+      <div class="nav-label">Flow preview</div>
+      <a href="new-note.html"><span class="nav-icon">1</span> Add source</a>
+      <a href="processing.html"><span class="nav-icon">2</span> Processing</a>
+      <a href="note.html"><span class="nav-icon">3</span> Review note</a>
+    </nav>
+    <div class="sidebar-footer">Static UI mockup<br />No live backend</div>
+  </aside>
+
+  <main class="main">
+    <div class="page-header">
+      <p class="eyebrow">Dashboard</p>
+      <h1>Good morning. What are we turning into notes today?</h1>
+      <p>Drop in a video, article, PDF, image, or audio file — Notes AI extracts the content and writes a structured, illustrated study note for you.</p>
+    </div>
+
+    <div class="btn-row" style="margin-top:0;">
+      <a class="btn btn-primary" href="new-note.html">＋ New note</a>
+      <a class="btn" href="library.html">Browse library</a>
+    </div>
+
+    <div class="grid grid-3" style="margin-top:28px;">
+      <div class="stat"><div class="value">128</div><div class="label">Notes in your knowledge base</div></div>
+      <div class="stat"><div class="value">5</div><div class="label">Source types supported</div></div>
+      <div class="stat"><div class="value">36</div><div class="label">Related-note links found</div></div>
+    </div>
+
+    <div class="section-title">
+      <h3>How a note gets made</h3>
+    </div>
+    <div class="flow">
+      <a class="flow-step" href="new-note.html">
+        <div class="num">STEP 1</div>
+        <h4>Add a source</h4>
+        <p>Paste a YouTube link, article URL, or upload a PDF, image, or audio file.</p>
+      </a>
+      <a class="flow-step" href="processing.html">
+        <div class="num">STEP 2</div>
+        <h4>Pipeline runs</h4>
+        <p>Content is extracted, outlined, written, highlighted, and illustrated.</p>
+      </a>
+      <a class="flow-step" href="note.html">
+        <div class="num">STEP 3</div>
+        <h4>Review the note</h4>
+        <p>Read the generated Markdown note with highlights, examples, and visuals.</p>
+      </a>
+      <a class="flow-step" href="library.html">
+        <div class="num">STEP 4</div>
+        <h4>Save &amp; connect</h4>
+        <p>Store it in your knowledge base and surface related notes automatically.</p>
+      </a>
+    </div>
+
+    <div class="section-title">
+      <h3>Recent notes</h3>
+      <a href="library.html">View all →</a>
+    </div>
+    <div class="grid grid-3">
+      <a class="note-card" href="note.html">
+        <div class="source-icon">▶</div>
+        <div class="title">Transformers, Explained Simply</div>
+        <div class="snippet">Attention mechanisms, positional encoding, and why self-attention scales so well.</div>
+        <div class="card-footer"><span>YouTube · 18 min</span><span>Today</span></div>
+      </a>
+      <a class="note-card" href="note.html">
+        <div class="source-icon">📄</div>
+        <div class="title">A Primer on Vector Databases</div>
+        <div class="snippet">Embeddings, indexing strategies (HNSW, IVF), and when to reach for ChromaDB.</div>
+        <div class="card-footer"><span>PDF · 12 pages</span><span>Yesterday</span></div>
+      </a>
+      <a class="note-card" href="note.html">
+        <div class="source-icon">🌐</div>
+        <div class="title">Designing Idempotent APIs</div>
+        <div class="snippet">Retry semantics, idempotency keys, and safe write patterns for distributed systems.</div>
+        <div class="card-footer"><span>Article</span><span>2 days ago</span></div>
+      </a>
+    </div>
+  </main>
+</div>
+</body>
+</html>

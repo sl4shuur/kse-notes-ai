@@ -1,11 +1,16 @@
 """Sources API endpoints."""
+import asyncio
 import json
 import os
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import BackgroundTasks, FastAPI, HTTPException
 from pydantic import BaseModel
+
+from notes_ai.api.jobs import _read_jobs, _write_jobs
+from notes_ai.api.uploads import get_upload_path
+from notes_ai.main import generate_notes
 
 app = FastAPI()
 
@@ -30,10 +35,6 @@ class SourceCreate(BaseModel):
     note_focus: str | None = None
 
 
-from notes_ai.api.jobs import _read_jobs, _write_jobs
-import asyncio
-from notes_ai.main import generate_notes
-
 def run_job(job_id: str, location: str, note_focus: str | None = None):
     jobs = _read_jobs()
     for j in jobs:
@@ -43,11 +44,10 @@ def run_job(job_id: str, location: str, note_focus: str | None = None):
     _write_jobs(jobs)
 
     try:
-        notes = asyncio.run(generate_notes([location]))
-        note_id = None
-        if notes:
-            note = notes[0]
-            note_id = note.title
+        notes = asyncio.run(generate_notes([location], note_focus=note_focus))
+        if not notes:
+            raise RuntimeError("The pipeline did not generate a note")
+        note_id = notes[0].title
 
         jobs = _read_jobs()
         for j in jobs:
@@ -56,16 +56,21 @@ def run_job(job_id: str, location: str, note_focus: str | None = None):
                 j["note_id"] = note_id
                 break
         _write_jobs(jobs)
-    except Exception as e:
+    except Exception as error:
         jobs = _read_jobs()
         for j in jobs:
             if j["id"] == job_id:
                 j["status"] = "failed"
+                j["error"] = str(error)
                 break
         _write_jobs(jobs)
 
 @app.post("/sources", status_code=202)
 async def create_source(body: SourceCreate, background_tasks: BackgroundTasks):
+    processing_location = body.location
+    if body.input_type in {"pdf", "image", "audio"}:
+        processing_location = str(get_upload_path(body.location))
+
     source_id = f"src_{uuid4().hex[:8]}"
     source_record = {
         "id": source_id,
@@ -90,7 +95,7 @@ async def create_source(body: SourceCreate, background_tasks: BackgroundTasks):
     _write_jobs(jobs)
 
     # Enqueue pipeline job
-    background_tasks.add_task(run_job, job_id, body.location, body.note_focus)
+    background_tasks.add_task(run_job, job_id, processing_location, body.note_focus)
 
     return {"job_id": job_id, "source": source_record}
 

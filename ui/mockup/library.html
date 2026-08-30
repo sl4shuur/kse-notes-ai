@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Notes AI — Library</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark">N</span> Notes AI</div>
+    <nav class="nav">
+      <div class="nav-label">Workspace</div>
+      <a href="index.html"><span class="nav-icon">⌂</span> Dashboard</a>
+      <a href="new-note.html"><span class="nav-icon">＋</span> New note</a>
+      <a href="library.html" class="active"><span class="nav-icon">▤</span> Library</a>
+    </nav>
+    <div class="sidebar-footer">Static UI mockup<br />No live backend</div>
+  </aside>
+
+  <main class="main">
+    <div class="page-header">
+      <p class="eyebrow">Knowledge base</p>
+      <h1>Library</h1>
+      <p>Every note lives here, searchable by content and automatically linked to related notes through embeddings.</p>
+    </div>
+
+    <ul class="steps">
+      <li class="done"><span class="dot">✓</span> Add source</li>
+      <li class="connector"></li>
+      <li class="done"><span class="dot">✓</span> Processing</li>
+      <li class="connector"></li>
+      <li class="done"><span class="dot">✓</span> Review</li>
+      <li class="connector"></li>
+      <li class="active"><span class="dot">✓</span> Saved</li>
+    </ul>
+
+    <div class="toolbar">
+      <div class="search-input"><input type="text" placeholder="Search notes by topic, keyword, or tag…" /></div>
+      <a class="btn btn-primary" href="new-note.html">＋ New note</a>
+    </div>
+
+    <div class="filter-row">
+      <span class="filter-chip active">All (128)</span>
+      <span class="filter-chip">▶ YouTube (54)</span>
+      <span class="filter-chip">🌐 Articles (38)</span>
+      <span class="filter-chip">📄 PDFs (22)</span>
+      <span class="filter-chip">🖼 Images (9)</span>
+      <span class="filter-chip">🎧 Audio (5)</span>
+    </div>
+
+    <div class="grid grid-3">
+      <a class="note-card" href="note.html">
+        <div class="source-icon">▶</div>
+        <div class="title">Transformers, Explained Simply</div>
+        <div class="snippet">Self-attention, positional encoding, and why transformers parallelize so well.</div>
+        <div class="tag-row"><span class="tag">machine-learning</span><span class="tag">nlp</span></div>
+        <div class="card-footer"><span>YouTube · 18 min</span><span>Today</span></div>
+      </a>
+      <a class="note-card" href="note.html">
+        <div class="source-icon">📄</div>
+        <div class="title">A Primer on Vector Databases</div>
+        <div class="snippet">Embeddings, HNSW indexing, and when to reach for ChromaDB over a relational store.</div>
+        <div class="tag-row"><span class="tag">databases</span><span class="tag">embeddings</span></div>
+        <div class="card-footer"><span>PDF · 12 pages</span><span>Yesterday</span></div>
+      </a>
+      <a class="note-card" href="note.html">
+        <div class="source-icon">🌐</div>
+        <div class="title">Designing Idempotent APIs</div>
+        <div class="snippet">Retry semantics, idempotency keys, and safe write patterns for distributed systems.</div>
+        <div class="tag-row"><span class="tag">backend</span><span class="tag">apis</span></div>
+        <div class="card-footer"><span>Article</span><span>2 days ago</span></div>
+      </a>
+      <a class="note-card" href="note.html">
+        <div class="source-icon">▶</div>
+        <div class="title">Positional Encoding, Visually</div>
+        <div class="snippet">Why sine and cosine functions of different frequencies encode token order.</div>
+        <div class="tag-row"><span class="tag">nlp</span><span class="tag">math</span></div>
+        <div class="card-footer"><span>YouTube · 9 min</span><span>3 days ago</span></div>
+      </a>
+      <a class="note-card" href="note.html">
+        <div class="source-icon">🎧</div>
+        <div class="title">Lecture: Distributed Consensus</div>
+        <div class="snippet">Paxos vs. Raft, leader election, and failure modes in replicated logs.</div>
+        <div class="tag-row"><span class="tag">systems</span><span class="tag">consensus</span></div>
+        <div class="card-footer"><span>Audio · 52 min</span><span>4 days ago</span></div>
+      </a>
+      <a class="note-card" href="note.html">
+        <div class="source-icon">🖼</div>
+        <div class="title">Whiteboard: CAP Theorem Tradeoffs</div>
+        <div class="snippet">A photographed whiteboard sketch turned into a structured explanation with a diagram.</div>
+        <div class="tag-row"><span class="tag">systems</span><span class="tag">theory</span></div>
+        <div class="card-footer"><span>Image</span><span>5 days ago</span></div>
+      </a>
+      <a class="note-card" href="note.html">
+        <div class="source-icon">📄</div>
+        <div class="title">RNNs vs. Transformers</div>
+        <div class="snippet">A side-by-side comparison of sequential and parallel sequence models.</div>
+        <div class="tag-row"><span class="tag">machine-learning</span></div>
+        <div class="card-footer"><span>PDF · 6 pages</span><span>1 week ago</span></div>
+      </a>
+      <a class="note-card" href="note.html">
+        <div class="source-icon">🌐</div>
+        <div class="title">A Gentle Intro to Docker Compose</div>
+        <div class="snippet">Services, networks, and volumes — running a full local stack with one command.</div>
+        <div class="tag-row"><span class="tag">infra</span><span class="tag">docker</span></div>
+        <div class="card-footer"><span>Article</span><span>1 week ago</span></div>
+      </a>
+      <a class="note-card" href="note.html">
+        <div class="source-icon">▶</div>
+        <div class="title">Observability with Arize Phoenix</div>
+        <div class="snippet">Tracing LLM calls and pipeline steps to debug prompts and latency.</div>
+        <div class="tag-row"><span class="tag">observability</span><span class="tag">llm</span></div>
+        <div class="card-footer"><span>YouTube · 14 min</span><span>2 weeks ago</span></div>
+      </a>
+    </div>
+  </main>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

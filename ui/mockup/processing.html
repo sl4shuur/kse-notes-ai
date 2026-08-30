@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Notes AI — Processing</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark">N</span> Notes AI</div>
+    <nav class="nav">
+      <div class="nav-label">Workspace</div>
+      <a href="index.html"><span class="nav-icon">⌂</span> Dashboard</a>
+      <a href="new-note.html"><span class="nav-icon">＋</span> New note</a>
+      <a href="library.html"><span class="nav-icon">▤</span> Library</a>
+    </nav>
+    <div class="sidebar-footer">Static UI mockup<br />No live backend</div>
+  </aside>
+
+  <main class="main">
+    <div class="page-header">
+      <p class="eyebrow">New note</p>
+      <h1>Generating your note</h1>
+      <p>“Transformers, Explained Simply” · YouTube · 18 min — this usually takes under a minute.</p>
+    </div>
+
+    <ul class="steps">
+      <li class="done"><span class="dot">✓</span> Add source</li>
+      <li class="connector"></li>
+      <li class="active"><span class="dot">2</span> Processing</li>
+      <li class="connector"></li>
+      <li><span class="dot">3</span> Review</li>
+      <li class="connector"></li>
+      <li><span class="dot">4</span> Save</li>
+    </ul>
+
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:baseline;">
+        <strong style="font-size:14px;">Pipeline progress</strong>
+        <span style="font-size:13px; color:var(--text-muted);" data-progress-pct>0%</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill"></div></div>
+
+      <div class="stage-list" data-pipeline style="margin-top:20px;">
+        <div class="stage is-active">
+          <div class="stage-icon"><span class="spinner"></span></div>
+          <div class="stage-body">
+            <div class="stage-title">Extract content</div>
+            <div class="stage-desc">Downloading transcript and sampling key video frames.</div>
+            <div class="stage-status">In progress…</div>
+          </div>
+        </div>
+        <div class="stage is-pending">
+          <div class="stage-icon">2</div>
+          <div class="stage-body">
+            <div class="stage-title">Structure the outline</div>
+            <div class="stage-desc">Identifying sections, topics, and logical flow.</div>
+            <div class="stage-status">Waiting…</div>
+          </div>
+        </div>
+        <div class="stage is-pending">
+          <div class="stage-icon">3</div>
+          <div class="stage-body">
+            <div class="stage-title">Generate note draft</div>
+            <div class="stage-desc">Writing structured Markdown from the outline.</div>
+            <div class="stage-status">Waiting…</div>
+          </div>
+        </div>
+        <div class="stage is-pending">
+          <div class="stage-icon">4</div>
+          <div class="stage-body">
+            <div class="stage-title">Add highlights &amp; examples</div>
+            <div class="stage-desc">Semantic highlighting of key terms, plus metaphors and examples.</div>
+            <div class="stage-status">Waiting…</div>
+          </div>
+        </div>
+        <div class="stage is-pending">
+          <div class="stage-icon">5</div>
+          <div class="stage-body">
+            <div class="stage-title">Generate visuals</div>
+            <div class="stage-desc">Creating supporting diagrams and plots where useful.</div>
+            <div class="stage-status">Waiting…</div>
+          </div>
+        </div>
+        <div class="stage is-pending">
+          <div class="stage-icon">6</div>
+          <div class="stage-body">
+            <div class="stage-title">Finalize</div>
+            <div class="stage-desc">Cleaning formatting and indexing for the knowledge base.</div>
+            <div class="stage-status">Waiting…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <strong style="font-size:13px;">Pipeline log</strong>
+      <div class="console" style="margin-top:10px;">
+        <div><span class="muted">[00:01]</span> source detected: youtube · id=aircAruvnKk</div>
+        <div><span class="muted">[00:02]</span> fetching transcript…</div>
+        <div><span class="muted">[00:04]</span> <span class="ok">transcript ready</span> · 2,140 words</div>
+        <div><span class="muted">[00:05]</span> sampling frames at scene changes…</div>
+        <div><span class="muted">[00:07]</span> handing off to note-generation pipeline…</div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <a class="btn btn-primary" href="note.html" disabled data-view-note-btn>Waiting for pipeline…</a>
+      <a class="btn" href="new-note.html">Back</a>
+    </div>
+  </main>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

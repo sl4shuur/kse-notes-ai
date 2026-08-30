@@ -45,7 +45,8 @@ async def generate_notes(
     name: str | None = None,
     verbose: bool = False,
     tracing = True,
-    is_cli: bool = False
+    is_cli: bool = False,
+    note_focus: str | None = None,
     ) -> list[Note]:
     """Generate notes for sources using the configured application adapters."""
     config = get_config()
@@ -57,7 +58,7 @@ async def generate_notes(
         raise ConfigurationError("GROQ_API_KEY is not set. Add it to the environment or .env file.")
 
     llm = GroqLLMClient(api_key=config.groq_api_key, tracing=tracing, phoenix_endpoint=config.phoenix_collector_endpoint)
-    generator = NoteGenerator(llm, logger)
+    generator = NoteGenerator(llm, logger, note_focus=note_focus)
     store = MarkdownNoteStore(output_dir=output_dir)
     extractors = [
         YouTubeExtractor(logger=logger, temp_audio_dir=config.temp_audio_dir),

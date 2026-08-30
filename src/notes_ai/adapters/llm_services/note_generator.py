@@ -17,9 +17,15 @@ USER_PROMPT_TEMPLATE = NOTE_GENERATION_USER_PROMPT_TEMPLATE
 class NoteGenerator:
     """Single agent responsible for the complete generated note."""
 
-    def __init__(self, llm: LLMClient, logger: CustomLogger):
+    def __init__(
+        self,
+        llm: LLMClient,
+        logger: CustomLogger,
+        note_focus: str | None = None,
+    ):
         self.llm = llm
         self.logger = logger
+        self.note_focus = note_focus
 
     async def generate(
         self,
@@ -30,6 +36,8 @@ class NoteGenerator:
         system_prompt: str = SYSTEM_PROMPT,
     ) -> Note:
         prompt = user_prompt.format(content=content.text)
+        if self.note_focus:
+            prompt += f"\n\nGive special attention to this focus: {self.note_focus}"
         generated_markdown = str(
             await self.llm.complete(
                 user_prompt=prompt,
